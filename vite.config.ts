@@ -19,9 +19,9 @@ function basePath(): Plugin {
 
 export default defineConfig({
   server: {
-    host: 'localhost',
+    host: '0.0.0.0',
     hmr: {
-      host: 'localhost',
+      host: '0.0.0.0',
     },
   },
   base: '',
