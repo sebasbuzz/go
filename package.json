@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc --skipLibCheck && vite build && vite build --ssr resources/client/server-entry.tsx",
+    "build": "tsc --skipLibCheck && vite build --ssr resources/client/server-entry.tsx",
     "ssr": "vite build --ssr resources/client/server-entry.tsx && node ./bootstrap/ssr/server-entry.mjs",
     "preview": "vite preview",
     "iconIndex": "node ./scripts/create-icon-index.js",

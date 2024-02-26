@@ -32,10 +32,12 @@ function PageContent({channel, children}: PageContentProps) {
       ...channel,
     },
   });
+  // @ts-ignore
   const updateChannel = useUpdateChannel(form);
 
   return (
     <CrupdateResourceLayout
+      // @ts-ignore
       form={form}
       onSubmit={values => {
         updateChannel.mutate(values);
