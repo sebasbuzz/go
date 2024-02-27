@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { a as useSettings, at as CustomMenu, T as Trans, m as message, s as showHttpErrorToast, n as apiClient, d as useDialogContext, b as Dialog, Z as DialogHeader, c as DialogBody, _ as DialogFooter, B as Button, I as IconButton, D as DialogTrigger, V as createSvgIcon, R as toast, Q as queryClient, o as CheckIcon, C as CloseIcon, O as Chip, a3 as FormattedDate, U as Tooltip, $ as ConfirmationDialog, au as LoginIcon, av as RadioGroup, aw as Radio, an as FormSelect, i as Item, ax as FormImageSelector, am as FormTextField, af as ButtonBase, ay as KeyboardArrowRightIcon, az as MixedText, aA as StaticPageTitle, ae as Form$1, a5 as FileUploadProvider, aB as useAppearanceEditorMode, aC as ProgressCircle, e as useTrans, ao as useValueLists, aD as List, aE as ListItem, aF as clamp, E as IllustratedMessage, F as SvgImage, aG as createSvgIconFromTree, aH as DoneAllIcon, a2 as TextField, q as opacityAnimation, w as Skeleton, aI as Section, g as useNavigate$1, aJ as useBootstrapData, J as FullPageLoader, t as LinkStyle, aK as SiteConfigContext, y as getBootstrapData, aL as useIsMobileMediaQuery, aM as SelectForwardRef, ad as onFormQueryError, aN as ProgressBar, aO as ExternalLink, W as MenuTrigger, Y as Menu, al as getInputFieldClassNames, aP as openUploadWindow, aQ as useSocialLogin, a4 as useLocalStorage, a1 as SettingsIcon, aR as removeEmptyValuesFromObject, aS as FormRadioGroup, aT as FormRadio, aU as DateFormatPresets, aV as prettyBytes, aW as useField, aX as Field, aY as useResendVerificationEmail, aq as useUser, aZ as useUploadAvatar, a_ as useRemoveAvatar, S as SearchIcon, a$ as slugifyString, b0 as useProducts, b1 as FormattedPrice, v as PageStatus, b2 as useMediaQuery, b3 as rootEl, b4 as createEventHandler, a7 as ErrorIcon, l as getCategoryLink, a6 as openDialog, a8 as closeDialog, j as getArticleLink, b5 as WarningIcon, X as KeyboardArrowDownIcon, b6 as Checkbox, b7 as useFileUploadStore, P as PageMetaTags, p as useAuth, b8 as shallowEqual, b9 as useSelectedLocale, ba as useDateFormatter, bb as useThemeSelector, bc as lazyLoader, k as ArticlePath, bd as useSpinDelay, be as PageErrorMessage, r as getEditArticleLink, bf as useCustomPage, bg as useCollator, bh as loadFonts, H as AuthRoute, K as NotFoundPage } from "../server-entry.mjs";
 import { a as DashboardLayout, b as DashboardNavbar, c as DashboardSidenav, d as DashboardContent, u as usePrevious, F as FormattedBytes, s as searchImage } from "./search-6a435ff4.mjs";
 import React, { useState, Fragment, forwardRef, useEffect, useRef, useLayoutEffect, useMemo, Suspense, useContext, Children, isValidElement, cloneElement, useCallback, useImperativeHandle, lazy, memo } from "react";
-import { F as FilterOperator, a as FilterControlType, c as createdAtFilter, b as updatedAtFilter, N as NameWithAvatar, k as BanUserDialog, l as DataTablePage, m as DeleteSelectedItemsAction, n as DataTableAddItemButton, o as FormSwitch, I as InfoDialogTrigger, p as Accordion, q as AccordionItem, j as AddIcon, i as FormChipField, D as DeleteIcon, r as Switch, U as USER_MODEL, M as MoreVertIcon, s as ChipField, v as TabContext, T as Tabs, e as TabList, f as Tab, w as DatatableDataQueryKey, x as useNormalizedModels, y as DataTable, z as useDataTable, t as timestampFilter, g as FormNormalizedModelField, E as FormDatePicker, u as useTags, H as dateRangeValueToPayload, J as FormattedNumber, K as DateRangeIcon, L as FormattedDateTimeRange, O as useDateRangePickerState, P as DateRangeComparePresets, Q as DateRangeDialog, B as ButtonGroup, R as DateRangePresets, S as SearchReportTable, G as GlobalLoadingProgress, V as truncateString, W as stripTags, X as onlineArticlesImg, h as CannedRepliesDatatablePage } from "./search-report-table-cd1c05ff.mjs";
+import { F as FilterOperator, a as FilterControlType, c as createdAtFilter, b as updatedAtFilter, N as NameWithAvatar, k as BanUserDialog, l as DataTablePage, m as DeleteSelectedItemsAction, n as DataTableAddItemButton, o as FormSwitch, I as InfoDialogTrigger, p as Accordion, q as AccordionItem, j as AddIcon, i as FormChipField, D as DeleteIcon, r as Switch, U as USER_MODEL, M as MoreVertIcon, s as ChipField, v as TabContext, T as Tabs, e as TabList, f as Tab, w as DatatableDataQueryKey, x as useNormalizedModels, y as DataTable, z as useDataTable, t as timestampFilter, g as FormNormalizedModelField, E as FormDatePicker, u as useTags, H as dateRangeValueToPayload, J as FormattedNumber, K as DateRangeIcon, L as FormattedDateTimeRange, O as useDateRangePickerState, P as DateRangeComparePresets, Q as DateRangeDialog, B as ButtonGroup, R as DateRangePresets, S as SearchReportTable, G as GlobalLoadingProgress, V as truncateString, W as stripTags, X as onlineArticlesImg, h as CannedRepliesDatatablePage } from "./search-report-table-341e4a27.mjs";
 import { d as downloadFileFromUrl, b as FileDownloadIcon, C as ChipList, a as DataTableEmptyStateMessage, K as KeyboardArrowLeftIcon, c as draggables, e as droppables, f as dragSession, h as dragMonitors, u as useDroppable, L as LinkIcon, j as useCurrentDateTime, k as Avatar, l as FileTypeIcon, m as FilePreviewDialog, n as CodeIcon, o as Divider, p as FontStyleButtons, I as IndentButtons, q as ListButtons, r as LinkButton, s as ImageButton, t as CodeBlockMenuTrigger, v as ClearFormatButton, T as Table, D as DataTablePaginationFooter, w as TableContext } from "./reply-editor-7e51a69b.mjs";
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { E as EditIcon } from "./Edit-7ad4ec30.mjs";
@@ -2269,7 +2269,7 @@ const iconGridStyle = {
   button: "flex flex-col items-center rounded hover:bg-hover h-90 aspect-square"
 };
 const skeletons = [...Array(60).keys()];
-const IconList = React.lazy(() => import("./icon-list-b763bf17.mjs"));
+const IconList = React.lazy(() => import("./icon-list-76e731c5.mjs"));
 function IconPicker({ onIconSelected }) {
   const { trans } = useTrans();
   const [value, setValue] = React.useState("");
@@ -2727,7 +2727,7 @@ function ThemeList() {
     fields.map((field, index) => /* @__PURE__ */ jsx(AppearanceButton, { to: `${index}`, elementType: NavLink, children: field.name }, field.key))
   ] });
 }
-const AceEditor = React.lazy(() => import("./ace-editor-488dc26e.mjs"));
+const AceEditor = React.lazy(() => import("./ace-editor-a8ff2217.mjs"));
 function AceDialog({
   defaultValue,
   mode = "html",
@@ -14924,6 +14924,15 @@ function CrupdateTicketCategoryForm({ form, onSubmit, formId }) {
     /* @__PURE__ */ jsx(
       FormTextField,
       {
+        name: "description_ticket_page",
+        label: /* @__PURE__ */ jsx(Trans, { message: "Description" }),
+        description: /* @__PURE__ */ jsx(Trans, { message: "Description for new ticket page." }),
+        className: "mb-20"
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      FormTextField,
+      {
         name: "display_name",
         label: /* @__PURE__ */ jsx(Trans, { message: "Display name" }),
         description: /* @__PURE__ */ jsx(Trans, { message: "User friendly category name." }),
@@ -14990,6 +14999,7 @@ function UpdateTicketCategoryDialog({ tag }) {
     defaultValues: {
       name: tag.name,
       display_name: tag.display_name,
+      description_ticket_page: tag.description_ticket_page,
       categories: tag.categories
     }
   });
@@ -15746,7 +15756,7 @@ function PreviewButton({
     }
   );
 }
-const ReportsPage = React.lazy(() => import("./admin-report-page-1a80e979.mjs"));
+const ReportsPage = React.lazy(() => import("./admin-report-page-4343710b.mjs"));
 const AdminRouteConfig = [
   {
     path: "appearance",
@@ -15934,4 +15944,4 @@ export {
   useFilter as y,
   iconGridStyle as z
 };
-//# sourceMappingURL=admin-routes-6bb1e6c3.mjs.map
+//# sourceMappingURL=admin-routes-cd3b70db.mjs.map

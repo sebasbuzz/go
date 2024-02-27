@@ -40,10 +40,10 @@ import "tus-js-client";
 import "mime-match";
 import "react-use-clipboard";
 import "slugify";
-const cssWorkerUrl = "/assets/worker-css-b70c72a0.js";
-const htmlWorkerUrl = "/assets/worker-html-63aac2ef.js";
-const phpWorkerUrl = "/assets/worker-php-47e5dfe7.js";
-const javascriptWorkerUrl = "/assets/worker-javascript-c4599136.js";
+const cssWorkerUrl = "/assets/worker-css-ca12fbb3.js";
+const htmlWorkerUrl = "/assets/worker-html-a0682eba.js";
+const phpWorkerUrl = "/assets/worker-php-75723c37.js";
+const javascriptWorkerUrl = "/assets/worker-javascript-e3ad1990.js";
 ace.config.setModuleUrl("ace/mode/css_worker", cssWorkerUrl);
 ace.config.setModuleUrl("ace/mode/html_worker", htmlWorkerUrl);
 ace.config.setModuleUrl("ace/mode/php_worker", phpWorkerUrl);
@@ -91,4 +91,4 @@ function AceEditor({
 export {
   AceEditor as default
 };
-//# sourceMappingURL=ace-editor-488dc26e.mjs.map
+//# sourceMappingURL=ace-editor-a8ff2217.mjs.map

@@ -750,7 +750,7 @@ const DatePickerField = React.forwardRef(({ inputRef, wrapperProps, children, on
         wrapperProps,
         {
           onBlur: (e) => {
-            if (!objRef.current.contains(e.relatedTarget)) {
+            if (objRef.current && !objRef.current.contains(e.relatedTarget)) {
               onBlur == null ? void 0 : onBlur(e);
             }
           },
@@ -4622,4 +4622,4 @@ export {
   DataTable as y,
   useDataTable as z
 };
-//# sourceMappingURL=search-report-table-cd1c05ff.mjs.map
+//# sourceMappingURL=search-report-table-341e4a27.mjs.map

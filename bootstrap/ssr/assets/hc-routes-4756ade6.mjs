@@ -587,7 +587,7 @@ function PageContent() {
   return /* @__PURE__ */ jsx(PageStatus, { query, show404: false, loaderIsScreen: false });
 }
 const TicketRoutes = React.lazy(
-  () => import("./hc-ticket-routes-7e2d9957.mjs")
+  () => import("./hc-ticket-routes-686faeec.mjs")
 );
 const RouteConfig = [
   {
@@ -635,4 +635,4 @@ export {
   hcRoutes as h,
   useSearchTermLogger as u
 };
-//# sourceMappingURL=hc-routes-0d1606ef.mjs.map
+//# sourceMappingURL=hc-routes-4756ade6.mjs.map

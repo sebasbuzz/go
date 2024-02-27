@@ -7120,10 +7120,10 @@ var dist = {};
     var _useState = (0, _react.useState)(function() {
       return getCookie2(key, initialValue);
     }), _useState2 = _slicedToArray(_useState, 2), item = _useState2[0], setItem = _useState2[1];
-    var updateItem = function updateItem2(value, options) {
+    var updateItem = (0, _react.useCallback)(function(value, options) {
       setItem(value);
       setCookie(key, value, options);
-    };
+    }, [key]);
     return [item, updateItem];
   }
 })(dist);
@@ -12412,9 +12412,9 @@ function Layout({ children }) {
     (landing == null ? void 0 : landing.show_footer) && /* @__PURE__ */ jsx(Footer, { className: "px-40" })
   ] });
 }
-const HelpCenterRoutes = React.lazy(() => import("./assets/hc-routes-0d1606ef.mjs").then((n) => n.h));
-const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-debd06aa.mjs"));
-const AdminRoutes = React.lazy(() => import("./assets/admin-routes-6bb1e6c3.mjs").then((n) => n.B));
+const HelpCenterRoutes = React.lazy(() => import("./assets/hc-routes-4756ade6.mjs").then((n) => n.h));
+const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-47f27a72.mjs"));
+const AdminRoutes = React.lazy(() => import("./assets/admin-routes-cd3b70db.mjs").then((n) => n.B));
 const SwaggerApiDocs = React.lazy(
   () => import("./assets/swagger-api-docs-page-a4c9a342.mjs")
 );

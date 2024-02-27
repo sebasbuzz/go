@@ -1,7 +1,7 @@
 import { jsx, jsxs } from "react/jsx-runtime";
 import { Link, useSearchParams, useParams, useRoutes } from "react-router-dom";
 import { T as Trans, M as FormattedRelativeTime, O as Chip, g as useNavigate, N as Navbar, B as Button, e as useTrans, p as useAuth, a2 as TextField, m as message, S as SearchIcon, aM as SelectForwardRef, i as Item, q as opacityAnimation, w as Skeleton, Q as queryClient, R as toast, s as showHttpErrorToast, n as apiClient, ac as useTicket, a5 as FileUploadProvider, v as PageStatus, a3 as FormattedDate, D as DialogTrigger, o as CheckIcon, $ as ConfirmationDialog, a as useSettings, f as useSearchArticles, A as ArticleLink, al as getInputFieldClassNames, ae as Form, an as FormSelect, am as FormTextField, K as NotFoundPage } from "../server-entry.mjs";
-import { H as HcSearchBar, u as useSearchTermLogger } from "./hc-routes-0d1606ef.mjs";
+import { H as HcSearchBar, u as useSearchTermLogger } from "./hc-routes-4756ade6.mjs";
 import { useRef, Fragment, useState } from "react";
 import { a as useTickets, S as SendReplyButton, l as TicketHeaderDateFormat, f as TicketTagList, c as useTicketReplies, T as TicketReplyLayout, I as InfiniteScrollSentinel, u as useChangeTicketStatus, k as useCreateTicket } from "./use-create-ticket-bef604ba.mjs";
 import { T as Table, D as DataTablePaginationFooter, a as DataTableEmptyStateMessage, R as ReplyEditor, A as AttachmentListLayout, F as FileEntryAttachmentLayout, j as useCurrentDateTime, x as AccordionAnimation, g as getReplyBody } from "./reply-editor-7e51a69b.mjs";
@@ -558,6 +558,7 @@ function TicketForm({ ticketCategories }) {
   const selectedCategory = ticketCategories.find(
     (c) => c.id == selectedCategoryId
   );
+  console.log("selectedCategory", selectedCategory);
   const handleSubmit = () => {
     createTicket.mutate(
       {
@@ -627,6 +628,7 @@ function TicketForm({ ticketCategories }) {
         ),
         /* @__PURE__ */ jsxs("div", { className: "my-24", children: [
           /* @__PURE__ */ jsx("div", { className: inputFieldClassNames.label, children: /* @__PURE__ */ jsx(Trans, { message: config.descriptionLabel }) }),
+          (selectedCategory == null ? void 0 : selectedCategory.description_ticket_page) && /* @__PURE__ */ jsx("div", { className: `[&_a]:underline ${inputFieldClassNames.label}`, children: /* @__PURE__ */ jsx("div", { dangerouslySetInnerHTML: { __html: selectedCategory.description_ticket_page } }) }),
           /* @__PURE__ */ jsx(FileUploadProvider, { children: /* @__PURE__ */ jsx(
             ReplyEditor,
             {
@@ -696,4 +698,4 @@ function HcTicketRoutes() {
 export {
   HcTicketRoutes as default
 };
-//# sourceMappingURL=hc-ticket-routes-7e2d9957.mjs.map
+//# sourceMappingURL=hc-ticket-routes-686faeec.mjs.map

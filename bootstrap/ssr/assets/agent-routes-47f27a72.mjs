@@ -5,7 +5,7 @@ import { g as useNavigate, T as Trans, M as FormattedRelativeTime, O as Chip, y 
 import { useCallback, useMemo, forwardRef, useState, useRef, Fragment, useEffect, Children, cloneElement, useContext } from "react";
 import { D as DataTablePaginationFooter, C as ChipList, T as Table, a as DataTableEmptyStateMessage, R as ReplyEditor$1, g as getReplyBody, A as AttachmentListLayout, F as FileEntryAttachmentLayout, i as insertLinkIntoTextEditor } from "./reply-editor-7e51a69b.mjs";
 import clsx from "clsx";
-import { u as useTags, D as DeleteIcon, G as GlobalLoadingProgress, F as FilterOperator, a as FilterControlType, c as createdAtFilter, b as updatedAtFilter, t as timestampFilter, U as USER_MODEL, A as AddFilterButton, d as FilterList, T as Tabs, e as TabList, f as Tab, N as NameWithAvatar, B as ButtonGroup, M as MoreVertIcon, g as FormNormalizedModelField, C as CreateCannedReplyDialog, h as CannedRepliesDatatablePage, i as FormChipField, j as AddIcon, I as InfoDialogTrigger, k as BanUserDialog, S as SearchReportTable } from "./search-report-table-cd1c05ff.mjs";
+import { u as useTags, D as DeleteIcon, G as GlobalLoadingProgress, F as FilterOperator, a as FilterControlType, c as createdAtFilter, b as updatedAtFilter, t as timestampFilter, U as USER_MODEL, A as AddFilterButton, d as FilterList, T as Tabs, e as TabList, f as Tab, N as NameWithAvatar, B as ButtonGroup, M as MoreVertIcon, g as FormNormalizedModelField, C as CreateCannedReplyDialog, h as CannedRepliesDatatablePage, i as FormChipField, j as AddIcon, I as InfoDialogTrigger, k as BanUserDialog, S as SearchReportTable } from "./search-report-table-341e4a27.mjs";
 import { m, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
 import { u as useKeybind, S as SearchTriggerButton } from "./search-trigger-button-ce677600.mjs";
@@ -3470,4 +3470,4 @@ function AgentRoutes() {
 export {
   AgentRoutes as default
 };
-//# sourceMappingURL=agent-routes-debd06aa.mjs.map
+//# sourceMappingURL=agent-routes-47f27a72.mjs.map
