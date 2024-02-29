@@ -48,10 +48,14 @@ class TicketCategoriesController extends BaseController
 
         $tag = Tag::create([
             'name' => $data['name'],
-            'description_ticket_page' => $data['description_ticket_page'],
             'display_name' => $data['display_name'] ?? $data['name'],
             'type' => 'category',
         ]);
+
+        if (isset($data['description_ticket_page'])) {
+            $tag->description_ticket_page = $data['description_ticket_page'];
+            $tag->save();
+        }
 
         if (isset($data['categories'])) {
             $tag->categories()->sync($data['categories']);
