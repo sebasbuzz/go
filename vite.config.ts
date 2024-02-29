@@ -18,6 +18,12 @@ function basePath(): Plugin {
 }
 
 export default defineConfig({
+  /* server: {
+    host: '0.0.0.0',
+    hmr: {
+      host: '0.0.0.0',
+    },
+  }, */
   server: {
     host: 'localhost',
     hmr: {
@@ -25,8 +31,13 @@ export default defineConfig({
     },
   },
   base: '',
+  /* base: '/', */
   resolve: {
     preserveSymlinks: true,
+    /* alias: {
+      '@common': '/common/resources/client',
+      '@app': '/resources/client',
+    }, */
   },
   build: {
     sourcemap: true,

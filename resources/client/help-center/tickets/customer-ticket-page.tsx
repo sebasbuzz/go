@@ -137,7 +137,7 @@ interface HeaderProps {
 }
 function Header({ticket, onOpenEditor, editorIsOpen}: HeaderProps) {
   return (
-    <div className="mb-44">
+    <div className="mb-44">aaaaaaaaaaaaaaaaa
       <div className="flex items-center gap-24">
         <div className="whitespace-nowrap text-muted max-md:hidden">
           <FormattedRelativeTime date={ticket.created_at} /> (
