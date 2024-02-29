@@ -42,6 +42,7 @@ class TicketCategoriesController extends BaseController
         $data = $this->validate(request(), [
             'name' => 'required|string|min:2|unique:tags',
             'display_name' => 'string|min:2',
+            'description_ticket_page' => 'string|nullable',
             'categories' => 'nullable|array',
         ]);
 
@@ -50,6 +51,11 @@ class TicketCategoriesController extends BaseController
             'display_name' => $data['display_name'] ?? $data['name'],
             'type' => 'category',
         ]);
+
+        if (isset($data['description_ticket_page'])) {
+            $tag->description_ticket_page = $data['description_ticket_page'];
+            $tag->save();
+        }
 
         if (isset($data['categories'])) {
             $tag->categories()->sync($data['categories']);
@@ -65,6 +71,7 @@ class TicketCategoriesController extends BaseController
         $data = $this->validate(request(), [
             'name' => "string|min:2|unique:tags,name,$tagId",
             'display_name' => 'string|min:2',
+            'description_ticket_page' => 'string|nullable',
             'categories' => 'nullable|array',
         ]);
 
@@ -73,6 +80,7 @@ class TicketCategoriesController extends BaseController
         $tag->fill([
             'name' => $data['name'],
             'display_name' => $data['display_name'],
+            'description_ticket_page' => $data['description_ticket_page'],
         ])->save();
 
         if (isset($data['categories'])) {

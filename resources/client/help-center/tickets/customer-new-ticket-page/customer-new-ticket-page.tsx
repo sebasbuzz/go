@@ -98,6 +98,7 @@ function TicketForm({ticketCategories}: TicketFormProps) {
   const selectedCategory = ticketCategories.find(
     c => c.id == selectedCategoryId,
   );
+  console.log('selectedCategory', selectedCategory);
 
   const handleSubmit = () => {
     createTicket.mutate(
@@ -169,6 +170,12 @@ function TicketForm({ticketCategories}: TicketFormProps) {
         <div className={inputFieldClassNames.label}>
           <Trans message={config!.descriptionLabel} />
         </div>
+          
+        {selectedCategory?.description_ticket_page && (
+          <div className={`[&_a]:underline ${inputFieldClassNames.label}`}>
+            <div dangerouslySetInnerHTML={{ __html: selectedCategory.description_ticket_page }} />
+          </div>
+        )}
         <FileUploadProvider>
           <ReplyEditor
             autoFocus={false}

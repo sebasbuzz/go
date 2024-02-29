@@ -27,6 +27,12 @@ export function CrupdateTicketCategoryForm({form, onSubmit, formId}: Props) {
         autoFocus
       />
       <FormTextField
+        name="description_ticket_page"
+        label={<Trans message="Description" />}
+        description={<Trans message="Description for new ticket page." />}
+        className="mb-20"
+      />
+      <FormTextField
         name="display_name"
         label={<Trans message="Display name" />}
         description={<Trans message="User friendly category name." />}

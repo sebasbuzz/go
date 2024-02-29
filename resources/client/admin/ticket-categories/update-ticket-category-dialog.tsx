@@ -22,6 +22,7 @@ export function UpdateTicketCategoryDialog({tag}: Props) {
     defaultValues: {
       name: tag.name,
       display_name: tag.display_name,
+      description_ticket_page: tag.description_ticket_page,
       categories: tag.categories,
     },
   });

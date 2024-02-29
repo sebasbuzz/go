@@ -17,6 +17,7 @@ interface Response extends BackendResponse {
 export interface CreateTicketCategoryPayload {
   name: string;
   display_name: string;
+  description_ticket_page?: string;
   categories: ChipValue[];
 }
 

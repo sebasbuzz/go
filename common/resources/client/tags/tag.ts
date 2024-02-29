@@ -4,6 +4,7 @@ export interface Tag {
   id: number;
   name: string;
   display_name: string;
+  description_ticket_page?: string;
   type: string;
   updated_at: string;
   created_at: string;
