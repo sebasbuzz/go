@@ -23,6 +23,7 @@ interface Props {
   actions?: ReactNode;
   attachments?: ReactNode;
   className?: string;
+  ticketRequestType: number;
 }
 export function TicketReplyLayout({
   reply,
@@ -30,6 +31,7 @@ export function TicketReplyLayout({
   actions,
   attachments,
   className,
+  ticketRequestType,
 }: Props) {
   const bodyRef = useRef<HTMLDivElement>(null);
   useEffect(() => {

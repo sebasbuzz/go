@@ -12412,9 +12412,9 @@ function Layout({ children }) {
     (landing == null ? void 0 : landing.show_footer) && /* @__PURE__ */ jsx(Footer, { className: "px-40" })
   ] });
 }
-const HelpCenterRoutes = React.lazy(() => import("./assets/hc-routes-4756ade6.mjs").then((n) => n.h));
-const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-47f27a72.mjs"));
-const AdminRoutes = React.lazy(() => import("./assets/admin-routes-cd3b70db.mjs").then((n) => n.B));
+const HelpCenterRoutes = React.lazy(() => import("./assets/hc-routes-3423b88d.mjs").then((n) => n.h));
+const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-f9323dd8.mjs"));
+const AdminRoutes = React.lazy(() => import("./assets/admin-routes-6a4db8d9.mjs").then((n) => n.B));
 const SwaggerApiDocs = React.lazy(
   () => import("./assets/swagger-api-docs-page-a4c9a342.mjs")
 );

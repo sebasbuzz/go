@@ -51,6 +51,7 @@ class TicketController extends BaseController
                 'min:1',
                 new EnvatoSupportIsNotExpired(),
             ],
+            'ticket_request_type' => 'integer',
             'body' => 'required|min:3',
             'attachments' => 'array|max:10|exists:file_entries,id',
             'status' => 'string',
@@ -88,6 +89,7 @@ class TicketController extends BaseController
         $data = $this->validate(request(), [
             'subject' => 'min:3|max:255',
             'category_id' => 'integer|min:1',
+            'ticket_request_type' => 'integer',
             'status' => 'string',
             'user_id' => 'integer|exists:users,id',
         ]);

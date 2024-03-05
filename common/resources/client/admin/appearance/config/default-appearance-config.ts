@@ -101,6 +101,7 @@ export const DefaultAppearanceConfig: IAppearanceConfig = {
           '/account-settings',
           '/admin',
           '/admin/appearance',
+          '/admin/ticket-request-type',
           '/admin/settings',
           '/admin/plans',
           '/admin/subscriptions',

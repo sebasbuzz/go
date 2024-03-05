@@ -34,6 +34,7 @@ export function AgentTicketPageReplyList({
           reply={draft}
           className="pl-20 pr-8"
           actions={<ReplyActionsButton reply={draft} />}
+          ticketRequestType={ticket.ticket_request_type}
         />
       )}
       {query.items.map(reply => {
@@ -47,6 +48,7 @@ export function AgentTicketPageReplyList({
             isInitial={isInitial}
             actions={<ReplyActionsButton reply={reply} />}
             attachments={<ReplyAttachmentList reply={reply} />}
+            ticketRequestType={ticket.ticket_request_type}
           />
         );
       })}

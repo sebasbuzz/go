@@ -149,6 +149,7 @@ function ReplyList({data: {ticket, replies}}: ReplyListProps) {
             reply={reply}
             isInitial={isInitial}
             className="px-20"
+            ticketRequestType={ticket.ticket_request_type}
             attachments={
               reply.attachments?.length ? (
                 <AttachmentList attachments={reply.attachments} />
