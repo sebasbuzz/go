@@ -32,6 +32,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TicketAssigneeController;
 use App\Http\Controllers\TicketCategoriesController;
+use App\Http\Controllers\TicketRequestTypeController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TicketRepliesController;
 use App\Http\Controllers\TicketsMergeController;
@@ -86,6 +87,13 @@ Route::group(['prefix' => 'v1'], function() {
         Route::post('ticket-categories', [TicketCategoriesController::class, 'store']);
         Route::put('ticket-categories/{tagId}', [TicketCategoriesController::class, 'update']);
         Route::delete('ticket-categories/{tagIds}', [TicketCategoriesController::class, 'destroy']);
+        
+        //TICKET REQUEST TYPES
+        Route::get('ticket-request-type', [TicketRequestTypeController::class, 'index']);
+        Route::post('ticket-request-type', [TicketRequestTypeController::class, 'store']);
+        Route::put('ticket-request-type/{requesttypeId}', [TicketRequestTypeController::class, 'update']);
+        Route::delete('ticket-request-type/{requesttypeIds}', [TicketRequestTypeController::class, 'destroy']);
+        Route::get('ticket-request-type/{id}', [TicketRequestTypeController::class, 'show']);
 
         //REPORTS
         Route::get('reports/tickets', [ReportsController::class, 'tickets']);

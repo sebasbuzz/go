@@ -40,6 +40,7 @@ import {useChangeTicketStatus} from '@app/agent/ticket-actions/requests/use-chan
 import {useParams} from 'react-router-dom';
 import {toast} from '@common/ui/toast/toast';
 import {message} from '@common/i18n/message';
+import TicketTypeRequest from '@app/agent/ticket-layout/ticket-type-request-tag';
 
 export function CustomerTicketPage() {
   const navigate = useNavigate();
@@ -157,15 +158,20 @@ function Header({ticket, onOpenEditor, editorIsOpen}: HeaderProps) {
           {ticket.status}
         </Chip>
       </div>
-      <h1 className="my-12 text-2xl">{ticket.subject}</h1>
+      <div className="flex items-center gap-8">
+        <h1 className="my-12 text-2xl">{ticket.subject}</h1>
+        <TicketTypeRequest ticketRequestType={ticket.ticket_request_type} />
+      </div>
       <div className="flex items-center gap-12">
-        <TicketTagList
-          ticket={ticket}
-          tagType="category"
-          size="sm"
-          radius="rounded"
-          className="mr-auto font-semibold max-md:hidden"
-        />
+        <div className="mr-auto font-semibold max-md:hidden flex gap-4 items-center">
+          <TicketTagList
+            ticket={ticket}
+            tagType="category"
+            size="sm"
+            radius="rounded"
+            className=""
+          />
+        </div>
         {!ticket.closed_at && <MarkAsSolvedButton />}
         <Button
           size="sm"
@@ -197,6 +203,7 @@ function ReplyList({data: {ticket, replies}}: ReplyListProps) {
             key={reply.id}
             reply={reply}
             isInitial={isInitial}
+            ticketRequestType={ticket.ticket_request_type}
             attachments={
               reply.attachments?.length ? (
                 <AttachmentList attachments={reply.attachments} />

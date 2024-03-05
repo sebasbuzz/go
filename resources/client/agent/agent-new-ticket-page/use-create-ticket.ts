@@ -15,6 +15,7 @@ export interface CreateTicketPayload {
   user_id: number;
   subject: string;
   category_id: number;
+  ticket_request_type: number;
   status: string;
   body: string;
   attachments?: number[];

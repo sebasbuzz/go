@@ -20,6 +20,7 @@ class CreateTicket
             'subject' => $data['subject'],
             'received_at_email' => $data['received_at_email'] ?? null,
             'status' => $data['status'] ?? 'open',
+            'ticket_request_type' => $data['ticket_request_type'] ?? null,
         ]);
 
         if (isset($data['category_id'])) {

@@ -6,6 +6,7 @@ import {Trans} from '@common/i18n/trans';
 import {Breadcrumb} from '@common/ui/breadcrumbs/breadcrumb';
 import {useNavigate} from '@common/utils/hooks/use-navigate';
 import {useCustomerTicketCategories} from '@app/help-center/tickets/customer-new-ticket-page/use-customer-ticket-categories';
+import {useCustomerTicketRequestTypes} from '@app/help-center/tickets/customer-new-ticket-page/use-customer-ticket-request-types';
 import {useForm} from 'react-hook-form';
 import {
   CreateTicketPayload,
@@ -23,6 +24,7 @@ import {FileUploadProvider} from '@common/uploads/uploader/file-upload-provider'
 import {ReplyEditor} from '@app/reply-editor/reply-editor';
 import {Button} from '@common/ui/buttons/button';
 import {TicketTag} from '@app/agent/ticket';
+import {TicketRequestType} from '@app/agent/ticket-request-type';
 import {useCustomerNewTicketConfig} from '@app/help-center/tickets/customer-new-ticket-page/use-customer-new-ticket-config';
 import {SuggestedArticlesDrawer} from '@app/help-center/tickets/customer-new-ticket-page/suggested-articles-drawer';
 import {
@@ -35,6 +37,7 @@ export function CustomerNewTicketPage() {
   const navigate = useNavigate();
   const config = useCustomerNewTicketConfig();
   const query = useCustomerTicketCategories();
+  const queryRequestType = useCustomerTicketRequestTypes();
   const {envato} = useSettings();
   return (
     <div>
@@ -61,8 +64,11 @@ export function CustomerNewTicketPage() {
             {query.error && envato.enable && envato.require_purchase_code && (
               <EnvatoError />
             )}
-            {query.data ? (
-              <TicketForm ticketCategories={query.data.pagination.data} />
+            {query.data && queryRequestType.data ? (
+              <TicketForm
+                ticketCategories={query.data.pagination.data}
+                ticketRequestTypes={queryRequestType.data.pagination.data} 
+              />
             ) : null}
           </main>
           <Sidebar />
@@ -74,13 +80,15 @@ export function CustomerNewTicketPage() {
 
 interface TicketFormProps {
   ticketCategories: TicketTag[];
+  ticketRequestTypes: TicketRequestType[];
 }
-function TicketForm({ticketCategories}: TicketFormProps) {
+function TicketForm({ticketCategories, ticketRequestTypes}: TicketFormProps) {
   const config = useCustomerNewTicketConfig();
   const navigate = useNavigate();
   const form = useForm<CreateTicketPayload>({
     defaultValues: {
       category_id: ticketCategories[0]?.id,
+      ticket_request_type: ticketRequestTypes[0]?.id,
     },
   });
   const bodyError = form.formState.errors.body?.message;
@@ -98,7 +106,6 @@ function TicketForm({ticketCategories}: TicketFormProps) {
   const selectedCategory = ticketCategories.find(
     c => c.id == selectedCategoryId,
   );
-  console.log('selectedCategory', selectedCategory);
 
   const handleSubmit = () => {
     createTicket.mutate(
@@ -154,6 +161,18 @@ function TicketForm({ticketCategories}: TicketFormProps) {
         {ticketCategories.map(category => (
           <Item key={category.id} value={category.id}>
             {category.display_name || category.name}
+          </Item>
+        ))}
+      </FormSelect>
+      <FormSelect
+        name="ticket_request_type"
+        label={<Trans message="Request Type" />}
+        selectionMode="single"
+        className="mb-24"
+      >
+        {ticketRequestTypes.map(request_type => (
+          <Item key={request_type.id} value={request_type.id}>
+            {request_type.display_name || request_type.name}
           </Item>
         ))}
       </FormSelect>

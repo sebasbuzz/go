@@ -21,6 +21,7 @@ export interface Ticket {
   assigned_to?: number;
   created_at?: string;
   updated_at?: string;
+  ticket_request_type: number;
   updated_at_formatted: string;
   user?: User;
   assignee?: User;
