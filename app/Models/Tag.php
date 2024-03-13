@@ -30,4 +30,10 @@ class Tag extends BaseTag
             'name',
         ]);
     }
+
+    public function ticketRequestType()
+    {
+        return $this->belongsToMany(TicketRequestType::class, 'tag_request_type', 'tag_id', 'request_type_id')
+            ->withPivot('id');
+    }
 }

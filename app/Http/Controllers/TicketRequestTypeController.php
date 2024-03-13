@@ -91,6 +91,7 @@ class TicketRequestTypeController extends BaseController
             $response = [
                 'name' => $id->name,
                 'display_name' => $id->display_name,
+                'id' => $id->id,
             ];
 
             return $this->success(['ticket_request_type' => $response]);

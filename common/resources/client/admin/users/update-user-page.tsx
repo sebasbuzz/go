@@ -40,6 +40,7 @@ export function UpdateUserPage() {
         email_verified_at: Boolean(data.user.email_verified_at),
         available_space: data.user.available_space,
         avatar: data.user.avatar,
+        team_id: data.user.team_id,
       });
     }
   }, [data?.user, form]);

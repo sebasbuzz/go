@@ -6,7 +6,7 @@ import {
   GetTicketResponse,
   useTicket,
 } from '@app/agent/agent-ticket-page/requests/use-ticket';
-import {TicketHeaderDateFormat} from '@app/agent/ticket-layout/ticket-header-layout';
+/* import {TicketHeaderDateFormat} from '@app/agent/ticket-layout/ticket-header-layout'; */
 import {useTicketReplies} from '@app/agent/agent-ticket-page/reply-list/requests/use-ticket-replies';
 import {TicketReplyLayout} from '@app/agent/ticket-layout/ticket-reply-layout';
 import {InfiniteScrollSentinel} from '@common/ui/infinite-scroll/infinite-scroll-sentinel';
@@ -41,6 +41,12 @@ import {useParams} from 'react-router-dom';
 import {toast} from '@common/ui/toast/toast';
 import {message} from '@common/i18n/message';
 import TicketTypeRequest from '@app/agent/ticket-layout/ticket-type-request-tag';
+import { useTeam } from './use-team';
+
+const TicketHeaderDateFormat: Intl.DateTimeFormatOptions = {
+  month: 'short',
+  day: 'numeric',
+};
 
 export function CustomerTicketPage() {
   const navigate = useNavigate();
@@ -137,6 +143,9 @@ interface HeaderProps {
   onOpenEditor: () => void;
 }
 function Header({ticket, onOpenEditor, editorIsOpen}: HeaderProps) {
+  const {assignee} = ticket;
+  const teamId = assignee?.team_id;
+  const assignedTeam = useTeam(teamId)
   return (
     <div className="mb-44">
       <div className="flex items-center gap-24">
@@ -164,13 +173,18 @@ function Header({ticket, onOpenEditor, editorIsOpen}: HeaderProps) {
       </div>
       <div className="flex items-center gap-12">
         <div className="mr-auto font-semibold max-md:hidden flex gap-4 items-center">
-          <TicketTagList
+          {/* <TicketTagList
             ticket={ticket}
             tagType="category"
             size="sm"
             radius="rounded"
             className=""
-          />
+          /> */}
+          {teamId && assignedTeam && (
+            <div>
+              <span className="text-muted">Assigned to:</span> <span className="font-medium">{assignedTeam?.data?.team?.display_name}</span>
+            </div>
+          )}
         </div>
         {!ticket.closed_at && <MarkAsSolvedButton />}
         <Button

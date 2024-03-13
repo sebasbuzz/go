@@ -4,7 +4,7 @@ import {Fragment, ReactNode} from 'react';
 import {Ticket} from '@app/agent/ticket';
 import TicketTypeRequestTag from './ticket-type-request-tag';
 
-export const TicketHeaderDateFormat: Intl.DateTimeFormatOptions = {
+const TicketHeaderDateFormat: Intl.DateTimeFormatOptions = {
   month: 'short',
   day: 'numeric',
 };

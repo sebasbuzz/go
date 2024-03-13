@@ -22,6 +22,7 @@ export interface FetchValueListsResponse extends BackendResponse {
   permissions?: Permission[];
   workspacePermissions?: Permission[];
   roles?: Role[];
+  /* team_id?: number; */
   menuItemCategories?: MenuItemCategory[];
   googleFonts?: FontConfig[];
   workspaceRoles?: Role[];

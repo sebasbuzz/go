@@ -50,6 +50,7 @@ import {EditCustomPage} from '@common/admin/custom-pages/edit-custom-page';
 import {CreateCustomPage} from '@common/admin/custom-pages/create-custom-page';
 import {ThemeFontPanel} from '@common/admin/appearance/sections/themes/theme-font-panel';
 import {ThemeRadiusPanel} from '@common/admin/appearance/sections/themes/theme-radius-panel';
+import { TeamsIndexPage } from './teams/teams-index-page';
 
 const ReportsPage = React.lazy(() => import('./analytics/admin-report-page'));
 
@@ -146,6 +147,32 @@ const AdminRouteConfig: RouteObject[] = [
           </AuthRoute>
         ),
       },
+      //TEAMS
+      /* {
+        path: 'teams',
+        element: (
+          <AuthRoute permission="api.access">
+            <TeamsIndexPage />
+          </AuthRoute>
+        ),
+      }, */
+      /* {
+        path: 'roles/new',
+        element: (
+          <AuthRoute permission="roles.update">
+            <CreateRolePage />
+          </AuthRoute>
+        ),
+      },
+      {
+        path: 'roles/:roleId/edit',
+        element: (
+          <AuthRoute permission="roles.update">
+            <EditRolePage />
+          </AuthRoute>
+        ),
+      }, */
+
       // SUBSCRIPTIONS and PLANS
       {
         path: 'subscriptions',

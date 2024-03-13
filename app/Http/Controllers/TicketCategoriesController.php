@@ -25,11 +25,11 @@ class TicketCategoriesController extends BaseController
         $pagination = $dataSource->paginate();
 
         if (request('filterByPurchases')) {
-            $pagination->setCollection(
-                $this->filterCategoriesByUserPurchases(
-                    $pagination->getCollection(),
-                ),
-            );
+            $tags = $this->filterCategoriesByUserPurchases($pagination->getCollection());
+            $tags->load('ticketRequestType'); // Cargar la relación ticketRequestType
+            $pagination->setCollection($tags);
+        } else {
+            $pagination->getCollection()->load('ticketRequestType'); // Cargar la relación ticketRequestType
         }
 
         return $this->success(['pagination' => $pagination]);
@@ -44,6 +44,8 @@ class TicketCategoriesController extends BaseController
             'display_name' => 'string|min:2',
             'description_ticket_page' => 'string|nullable',
             'categories' => 'nullable|array',
+            'ticket_request_type' => 'nullable|array',
+            'ticket_request_type.*' => 'integer|exists:ticket_request_type,id',
         ]);
 
         $tag = Tag::create([
@@ -57,9 +59,15 @@ class TicketCategoriesController extends BaseController
             $tag->save();
         }
 
+        if (isset($data['ticket_request_type'])) {
+            $tag->ticketRequestType()->sync($data['ticket_request_type']);
+        }
+
         if (isset($data['categories'])) {
             $tag->categories()->sync($data['categories']);
         }
+
+        $tag->load('ticketRequestType');
 
         return $this->success(['tag' => $tag]);
     }
@@ -73,6 +81,8 @@ class TicketCategoriesController extends BaseController
             'display_name' => 'string|min:2',
             'description_ticket_page' => 'string|nullable',
             'categories' => 'nullable|array',
+            'ticket_request_type' => 'nullable|array',
+            'ticket_request_type.*' => 'integer|exists:ticket_request_type,id',
         ]);
 
         $tag = Tag::findOrFail($tagId);
@@ -83,9 +93,15 @@ class TicketCategoriesController extends BaseController
             'description_ticket_page' => $data['description_ticket_page'],
         ])->save();
 
+        if (isset($data['ticket_request_type'])) {
+            $tag->ticketRequestType()->sync($data['ticket_request_type']);
+        }
+
         if (isset($data['categories'])) {
             $tag->categories()->sync($data['categories']);
         }
+
+        $tag->load('ticketRequestType');
 
         return $this->success(['tag' => $tag]);
     }

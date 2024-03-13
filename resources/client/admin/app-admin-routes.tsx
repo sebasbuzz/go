@@ -18,6 +18,7 @@ import {CreateTriggerPage} from '@app/admin/triggers/create-trigger-page';
 import {ArticleDatatablePage} from '@app/admin/article-datatable/article-datatable-page';
 import {TicketCategoryDatatable} from '@app/admin/ticket-categories/ticket-category-datatable';
 import {TicketRequestType} from '@app/admin/ticket-request-type/ticket-request-type';
+import { TeamsIndexPage } from '@common/admin/teams/teams-index-page';
 
 export const AppAdminRoutes: RouteObject[] = [
   {
@@ -115,6 +116,10 @@ export const AppAdminRoutes: RouteObject[] = [
   {
     path: '/ticket-request-type',
     element: <TicketRequestType />,
+  },
+  {
+    path: '/teams',
+    element: <TeamsIndexPage />,
   },
   // canned replies
   {

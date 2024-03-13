@@ -42,6 +42,7 @@ function updateCategory(
   const payload = {
     ...formPayload,
     categories: formPayload.categories?.map(c => c.id) ?? [],
+    ticket_request_type: formPayload.ticket_request_type?.map(c => c.id) ?? [],
   };
   return apiClient
     .put(`ticket-categories/${categoryId}`, payload)

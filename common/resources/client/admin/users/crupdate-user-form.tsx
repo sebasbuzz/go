@@ -4,7 +4,9 @@ import {ReactNode} from 'react';
 import {Link} from 'react-router-dom';
 import {useValueLists} from '../../http/value-lists';
 import {FormTextField} from '../../ui/forms/input-field/text-field/text-field';
+import { FormSelect, Option } from '@common/ui/forms/select/select';
 import {FormSwitch} from '../../ui/forms/toggle/switch';
+import {Select} from '@common/ui/forms/select/select';
 import {FormFileSizeField} from '../../ui/forms/input-field/file-size-field';
 import {LinkStyle} from '../../ui/buttons/external-link';
 import {FormPermissionSelector} from '../../auth/ui/permission-selector';
@@ -13,6 +15,15 @@ import {FormChipField} from '../../ui/forms/input-field/chip-field/form-chip-fie
 import {Item} from '../../ui/forms/listbox/item';
 import {CrupdateResourceLayout} from '../crupdate-resource-layout';
 import {useSettings} from '../../core/settings/use-settings';
+import { useTeams } from './requests/use-teams';
+
+const MOCKDATA = [
+  {
+    id: 123,
+    name: "design",
+    display_name: "Design"
+  }
+]
 
 interface Props<T extends FieldValues> {
   onSubmit: SubmitHandler<T>;
@@ -36,6 +47,7 @@ export function CrupdateUserForm<T extends FieldValues>({
 }: Props<T>) {
   const {require_email_confirmation} = useSettings();
   const {data: valueLists} = useValueLists(['roles', 'permissions']);
+  const teams = useTeams();
 
   return (
     <CrupdateResourceLayout
@@ -107,6 +119,19 @@ export function CrupdateUserForm<T extends FieldValues>({
           </Item>
         )}
       </FormChipField>
+      {teams && (
+        <FormSelect
+          name="team_id"
+          selectionMode="single"
+          label={<Trans message="Team" />}
+        >
+          {teams?.data?.pagination.data.map(option => (
+            <Option key={option.id} value={option.id}>
+              {option.display_name}
+            </Option>
+          ))}
+        </FormSelect>
+      )}
       <div className="mt-30 border-t pt-30">
         <div className="mb-10 text-sm">
           <Trans message="Permissions" />

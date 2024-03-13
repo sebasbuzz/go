@@ -14,7 +14,7 @@ import { StaticRouter } from "react-router-dom/server.mjs";
 import { m, AnimatePresence, LazyMotion, domAnimation } from "framer-motion";
 import React, { useRef, useEffect, useId, forwardRef, createContext, useContext, memo, Fragment, isValidElement, cloneElement, useMemo, useState, useCallback, Children } from "react";
 import { useController, FormProvider, useForm } from "react-hook-form";
-import { useObjectRef, mergeProps, useViewportSize, useLayoutEffect } from "@react-aria/utils";
+import { useObjectRef, mergeProps, useViewportSize, useLayoutEffect, isMac, useGlobalListeners, focusWithoutScrolling, useValueEffect, useResizeObserver } from "@react-aria/utils";
 import clsx from "clsx";
 import memoize from "nano-memoize";
 import { NumberFormatter } from "@internationalized/number";
@@ -27,7 +27,7 @@ import { useParams, useNavigate as useNavigate$1, useLocation, createPath, resol
 import { useControlledState } from "@react-stately/utils";
 import { offset, shift, flip, size, arrow, useFloating, autoUpdate } from "@floating-ui/react-dom";
 import { mergeRefs } from "react-merge-refs";
-import { FocusScope, useFocusManager } from "@react-aria/focus";
+import { FocusScope, useFocusManager, getFocusableTreeWalker } from "@react-aria/focus";
 import { createPortal } from "react-dom";
 import { useIsSSR } from "@react-aria/ssr";
 import deepMerge from "deepmerge";
@@ -36,6 +36,7 @@ import { Upload } from "tus-js-client";
 import match from "mime-match";
 import useClipboard from "react-use-clipboard";
 import slugify from "slugify";
+import { useInteractOutside } from "@react-aria/interactions";
 let activeWorkspaceId = 0;
 function getActiveWorkspaceId() {
   return activeWorkspaceId;
@@ -1611,6 +1612,15 @@ function useTicketHcCategories() {
   var _a, _b;
   const { data } = useTicket();
   return ((_b = (_a = data == null ? void 0 : data.ticket) == null ? void 0 : _a.tags) == null ? void 0 : _b.filter((tag) => tag.type === "category").flatMap((tag) => tag.categories.map((c) => c.id))) || [];
+}
+function useCustomerTicketRequestType(id) {
+  return useQuery({
+    queryKey: ["ticket_request_type", `${id}`],
+    queryFn: () => fetchRequestTypes(id)
+  });
+}
+function fetchRequestTypes(id) {
+  return apiClient.get(`ticket-request-type/${id}`).then((response) => response.data);
 }
 function fetchTicket(ticketId) {
   return apiClient.get(`tickets/${ticketId}`).then((response) => response.data);
@@ -3320,7 +3330,7 @@ function Dialog(props) {
   const mergedClassName = clsx(
     "mx-auto pointer-events-auto outline-none flex flex-col overflow-hidden",
     background || "bg-paper",
-    type !== "tray" && sizeStyle(size2),
+    type !== "tray" && sizeStyle$1(size2),
     type === "tray" && "rounded-t border-b-bg",
     size2 !== "fullscreenTakeover" && `shadow-2xl border max-h-dialog`,
     !isTrayOrFullScreen && `${radius} ${maxWidth}`,
@@ -3347,7 +3357,7 @@ function Dialog(props) {
     }
   );
 }
-function sizeStyle(dialogSize) {
+function sizeStyle$1(dialogSize) {
   switch (dialogSize) {
     case "2xs":
       return "w-256";
@@ -6000,11 +6010,11 @@ function NotificationDialogTrigger({
           children: /* @__PURE__ */ jsx(Trans, { message: "Notifications" })
         }
       ),
-      /* @__PURE__ */ jsx(DialogBody, { padding: "p-0", children: /* @__PURE__ */ jsx(DialogContent, {}) })
+      /* @__PURE__ */ jsx(DialogBody, { padding: "p-0", children: /* @__PURE__ */ jsx(DialogContent$1, {}) })
     ] })
   ] });
 }
-function DialogContent() {
+function DialogContent$1() {
   const { data, isLoading } = useUserNotifications();
   if (isLoading) {
     return /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center px-24 py-20", children: /* @__PURE__ */ jsx(ProgressCircle, { "aria-label": "Loading notifications...", isIndeterminate: true }) });
@@ -11299,9 +11309,9 @@ function ContactSection() {
   ] });
 }
 const BillingPageRoutes = React.lazy(
-  () => import("./assets/billing-page-routes-2dc79440.mjs")
+  () => import("./assets/billing-page-routes-aee26f59.mjs")
 );
-const CheckoutRoutes = React.lazy(() => import("./assets/checkout-routes-7d69b8fa.mjs"));
+const CheckoutRoutes = React.lazy(() => import("./assets/checkout-routes-0d341751.mjs"));
 const BillingRoutes = /* @__PURE__ */ jsxs(Fragment, { children: [
   /* @__PURE__ */ jsx(Route, { path: "/pricing", element: /* @__PURE__ */ jsx(PricingPage, {}) }),
   /* @__PURE__ */ jsx(
@@ -12389,19 +12399,1603 @@ function SimpleHeader() {
     ] })
   ] });
 }
-function LandingPage() {
-  var _a;
-  const query = useLandingPage();
-  const { landing } = useSettings();
-  return /* @__PURE__ */ jsx(Layout, { children: query.data ? ((_a = landing == null ? void 0 : landing.content) == null ? void 0 : _a.variant) === "multiProduct" ? /* @__PURE__ */ jsx(MultiProductArticleGrid, { data: query.data }) : /* @__PURE__ */ jsx(ArticleGrid, { data: query.data }) : /* @__PURE__ */ jsx(
-    PageStatus,
+function useTickets$1(id) {
+  return useQuery({
+    queryKey: ["tickets"],
+    queryFn: () => fetchUserTickets(id)
+  });
+}
+function fetchUserTickets(id) {
+  return apiClient.get(`tickets?userId=${id}`).then((response) => response.data);
+}
+function isCtrlKeyPressed(e) {
+  if (isMac()) {
+    return e.metaKey;
+  }
+  return e.ctrlKey;
+}
+function isAnyInputFocused() {
+  return document.activeElement ? ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName) || document.activeElement.isContentEditable : false;
+}
+function useKeybind(el, shortcut, userCallback, { allowedInputSelector } = {}) {
+  const { addGlobalListener, removeAllGlobalListeners } = useGlobalListeners();
+  const callback = useCallbackRef(userCallback);
+  useEffect(() => {
+    const target = el === "window" ? window : el;
+    addGlobalListener(target, "keydown", (e) => {
+      if (!shouldIgnoreActiveEl(allowedInputSelector) && isAnyInputFocused()) {
+        return;
+      }
+      const matches = shortcut.split("+").every((key) => {
+        if (key === "ctrl") {
+          return isCtrlKeyPressed(e);
+        } else {
+          return e.key === key;
+        }
+      });
+      if (matches) {
+        e.preventDefault();
+        e.stopPropagation();
+        callback(e);
+      }
+    });
+    return removeAllGlobalListeners;
+  }, [
+    addGlobalListener,
+    shortcut,
+    removeAllGlobalListeners,
+    callback,
+    el,
+    allowedInputSelector
+  ]);
+}
+function shouldIgnoreActiveEl(selector) {
+  if (!selector || !document.activeElement) {
+    return false;
+  }
+  return document.activeElement.closest(selector);
+}
+const ignoredElements = ["INPUT", "TEXTAREA", "SELECT", "BUTTON"];
+const SearchTriggerButton = forwardRef(
+  ({
+    onTrigger,
+    size: size2,
+    children,
+    bg,
+    width,
+    radius = "rounded-input",
+    className,
+    onClick,
+    ...buttonProps
+  }, ref) => {
+    useKeybind("window", "ctrl+k", (e) => {
+      if (!ignoredElements.includes((e == null ? void 0 : e.target).tagName)) {
+        onTrigger();
+      }
+    });
+    return /* @__PURE__ */ jsxs(
+      ButtonBase,
+      {
+        ref,
+        ...buttonProps,
+        display: "block",
+        onClick: (e) => onTrigger(),
+        justify: "justify-none",
+        className: "flex-shrink-0",
+        children: [
+          /* @__PURE__ */ jsxs(
+            "span",
+            {
+              className: clsx(
+                "hidden items-center border bg-background text-muted shadow-sm transition-shadow focus:border-primary/60 focus:outline-none focus:ring focus:ring-primary/focus md:flex",
+                size2 === "sm" && "h-36 gap-6 px-12 text-sm",
+                size2 === "lg" && "text-md h-60 gap-12 px-24",
+                bg,
+                width,
+                radius,
+                className
+              ),
+              children: [
+                /* @__PURE__ */ jsx(
+                  SearchIcon,
+                  {
+                    className: "text-muted",
+                    size: size2 === "sm" ? "sm" : "md"
+                  }
+                ),
+                /* @__PURE__ */ jsx("span", { children }),
+                /* @__PURE__ */ jsxs("kbd", { className: "ml-auto hidden font-medium md:block", children: [
+                  /* @__PURE__ */ jsx("kbd", { className: "font-sans", children: "⌘" }),
+                  /* @__PURE__ */ jsx("kbd", { className: "font-sans", children: "K" })
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsx("span", { className: "focus:border-primary/60 focus:outline-none focus:ring focus:ring-primary/focus md:hidden", children: /* @__PURE__ */ jsx(SearchIcon, {}) })
+        ]
+      }
+    );
+  }
+);
+let searchSession = [];
+function useSearchTermLogger() {
+  const log = useCallback(({ term, results, categoryId }) => {
+    term = term == null ? void 0 : term.trim();
+    if (!term || term.length < 4) {
+      return;
+    }
+    searchSession.push({
+      term,
+      results: results.map((r) => r.id),
+      clickedArticle: false,
+      createdTicket: false,
+      categoryId
+    });
+  }, []);
+  const updateLastSearch = useCallback((data) => {
+    const lastItem = searchSession.at(-1);
+    if (lastItem) {
+      searchSession.push({ ...lastItem, ...data });
+    }
+  }, []);
+  return {
+    log,
+    updateLastSearch
+  };
+}
+function HcSearchBar({
+  placeholder = message("Search documentation"),
+  size: size2 = "sm",
+  width = "w-320",
+  categoryId,
+  ...buttonProps
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const handleOpen = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+  return /* @__PURE__ */ jsxs(
+    DialogTrigger,
     {
-      query,
-      show404: false,
-      delayedSpinner: false,
-      loaderIsScreen: false
+      type: "modal",
+      isOpen,
+      onOpenChange: setIsOpen,
+      placement: "top",
+      children: [
+        /* @__PURE__ */ jsx(
+          SearchTriggerButton,
+          {
+            ...buttonProps,
+            onTrigger: handleOpen,
+            size: size2,
+            width,
+            children: /* @__PURE__ */ jsx(Trans, { ...placeholder })
+          }
+        ),
+        /* @__PURE__ */ jsx(Dialog, { size: "lg", children: /* @__PURE__ */ jsx(DialogBody, { padding: "p-0", children: /* @__PURE__ */ jsx(DialogContent, { placeholder, categoryId }) }) })
+      ]
+    }
+  );
+}
+function DialogContent({ placeholder, categoryId }) {
+  const { close: close2 } = useDialogContext();
+  const { trans } = useTrans();
+  const [query, setQuery] = useState("");
+  const searchLogger = useSearchTermLogger();
+  const { data, isFetching } = useSearchArticles(
+    query,
+    { categoryIds: categoryId ? [categoryId] : void 0 },
+    {
+      onSearch: (r) => {
+        var _a;
+        searchLogger.log({
+          term: r.query,
+          results: r.pagination.data,
+          categoryId: (_a = r.categoryIds) == null ? void 0 : _a[0]
+        });
+      }
+    }
+  );
+  const navigate = useNavigate();
+  return /* @__PURE__ */ jsx(
+    ComboBoxForwardRef,
+    {
+      inputValue: query,
+      onInputValueChange: setQuery,
+      isAsync: true,
+      isLoading: isFetching,
+      items: data == null ? void 0 : data.pagination.data,
+      clearInputOnItemSelection: true,
+      endAdornmentIcon: /* @__PURE__ */ jsx(CloseIcon, {}),
+      placeholder: trans(placeholder),
+      startAdornment: /* @__PURE__ */ jsx(SearchIcon, {}),
+      prependListbox: true,
+      listboxClassName: "py-12 px-8",
+      inputRadius: "rounded-none",
+      inputBorder: "border-b",
+      inputRing: "ring-0",
+      size: "lg",
+      inputFontSize: "text-md",
+      inputShadow: "shadow-none",
+      onEndAdornmentClick: close2,
+      selectionMode: "none",
+      showEmptyMessage: true,
+      children: (result) => /* @__PURE__ */ jsx(
+        Item$1,
+        {
+          padding: "py-8 px-12",
+          radius: "rounded",
+          value: result.id,
+          onSelected: () => {
+            close2();
+            searchLogger.updateLastSearch({ clickedArticle: true });
+            navigate(getArticleLink(result));
+          },
+          description: /* @__PURE__ */ jsx(ArticlePath, { article: result }),
+          textLabel: result.title,
+          children: result.title
+        },
+        result.id
+      )
+    }
+  );
+}
+function useTickets(params) {
+  return useQuery({
+    queryKey: ["tickets", params],
+    queryFn: () => fetchTickets(params),
+    placeholderData: keepPreviousData
+  });
+}
+function fetchTickets(params) {
+  return apiClient.get("tickets", { params }).then((response) => response.data);
+}
+function useGridNavigation(props) {
+  const { cellCount, rowCount } = props;
+  const onKeyDown = (e) => {
+    switch (e.key) {
+      case "ArrowLeft":
+        focusSiblingCell(e, { cell: { op: "decrement" } }, props);
+        break;
+      case "ArrowRight":
+        focusSiblingCell(e, { cell: { op: "increment" } }, props);
+        break;
+      case "ArrowUp":
+        focusSiblingCell(e, { row: { op: "decrement" } }, props);
+        break;
+      case "ArrowDown":
+        focusSiblingCell(e, { row: { op: "increment" } }, props);
+        break;
+      case "PageUp":
+        focusSiblingCell(e, { row: { op: "decrement", count: 5 } }, props);
+        break;
+      case "PageDown":
+        focusSiblingCell(e, { row: { op: "increment", count: 5 } }, props);
+        break;
+      case "Tab":
+        focusFirstElementAfterGrid(e);
+        break;
+      case "Home":
+        if (isCtrlKeyPressed(e)) {
+          focusSiblingCell(
+            e,
+            {
+              row: { op: "decrement", count: rowCount },
+              cell: { op: "decrement", count: cellCount }
+            },
+            props
+          );
+        } else {
+          focusSiblingCell(
+            e,
+            { cell: { op: "decrement", count: cellCount } },
+            props
+          );
+        }
+        break;
+      case "End":
+        if (isCtrlKeyPressed(e)) {
+          focusSiblingCell(
+            e,
+            {
+              row: { op: "increment", count: rowCount },
+              cell: { op: "increment", count: cellCount }
+            },
+            props
+          );
+        } else {
+          focusSiblingCell(
+            e,
+            { cell: { op: "increment", count: cellCount } },
+            props
+          );
+        }
+        break;
+    }
+  };
+  return { onKeyDown };
+}
+function focusSiblingCell(e, operations, { cellCount, rowCount }) {
+  var _a, _b, _c, _d, _e, _f, _g;
+  if (((_a = document.activeElement) == null ? void 0 : _a.tagName) === "input")
+    return;
+  e.preventDefault();
+  const grid = e.currentTarget;
+  const currentCell = e.target.closest("[aria-colindex]");
+  if (!currentCell || !grid)
+    return;
+  const row = currentCell.closest("[aria-rowindex]");
+  if (!row)
+    return;
+  let rowIndex = parseInt(row.getAttribute("aria-rowindex"));
+  let cellIndex = parseInt(currentCell.getAttribute("aria-colindex"));
+  if (Number.isNaN(rowIndex) || Number.isNaN(cellIndex))
+    return;
+  const rowOpCount = ((_b = operations.row) == null ? void 0 : _b.count) ?? 1;
+  if (((_c = operations.row) == null ? void 0 : _c.op) === "increment") {
+    rowIndex = Math.min(rowCount, rowIndex + rowOpCount);
+  } else if (((_d = operations.row) == null ? void 0 : _d.op) === "decrement") {
+    rowIndex = Math.max(1, rowIndex - rowOpCount);
+  }
+  const cellOpCount = ((_e = operations.cell) == null ? void 0 : _e.count) ?? 1;
+  if (((_f = operations.cell) == null ? void 0 : _f.op) === "increment") {
+    cellIndex = Math.min(cellCount, cellIndex + cellOpCount);
+  } else if (((_g = operations.cell) == null ? void 0 : _g.op) === "decrement") {
+    cellIndex = Math.max(1, cellIndex - cellOpCount);
+  }
+  const nextCell = grid.querySelector(
+    `[aria-rowindex="${rowIndex}"] [aria-colindex="${cellIndex}"]`
+  );
+  if (!nextCell)
+    return;
+  const walker = getFocusableTreeWalker(nextCell);
+  const nextFocusableElement = walker.nextNode() || nextCell;
+  currentCell.setAttribute("tabindex", "-1");
+  nextFocusableElement.setAttribute("tabindex", "0");
+  nextFocusableElement.focus();
+}
+function focusFirstElementAfterGrid(e) {
+  const grid = e.currentTarget;
+  if (e.shiftKey) {
+    grid.focus();
+  } else {
+    const walker = getFocusableTreeWalker(grid, { tabbable: true });
+    let next;
+    let last;
+    do {
+      last = walker.lastChild();
+      if (last) {
+        next = last;
+      }
+    } while (last);
+    if (next && !next.contains(document.activeElement)) {
+      focusWithoutScrolling(next);
+    }
+  }
+}
+const TableContext = createContext(null);
+function useTableCellStyle({ index, isHeader }) {
+  const {
+    columns,
+    cellHeight = "h-46",
+    headerCellHeight = "h-46"
+  } = useContext(TableContext);
+  const column = columns[index];
+  const userPadding = column == null ? void 0 : column.padding;
+  let justify = "justify-start";
+  if ((column == null ? void 0 : column.align) === "center") {
+    justify = "justify-center";
+  } else if ((column == null ? void 0 : column.align) === "end") {
+    justify = "justify-end";
+  }
+  return clsx(
+    "flex items-center overflow-hidden whitespace-nowrap overflow-ellipsis outline-none focus-visible:outline focus-visible:outline-offset-2",
+    isHeader ? headerCellHeight : cellHeight,
+    (column == null ? void 0 : column.width) ?? "flex-1",
+    column == null ? void 0 : column.maxWidth,
+    column == null ? void 0 : column.minWidth,
+    justify,
+    userPadding,
+    column == null ? void 0 : column.className
+  );
+}
+function TableCell({
+  rowIndex,
+  rowIsHovered,
+  index,
+  item,
+  id
+}) {
+  const { columns } = useContext(TableContext);
+  const column = columns[index];
+  const rowContext = useMemo(() => {
+    return {
+      index: rowIndex,
+      isHovered: rowIsHovered,
+      isPlaceholder: item.isPlaceholder
+    };
+  }, [rowIndex, rowIsHovered, item.isPlaceholder]);
+  const style = useTableCellStyle({
+    index,
+    isHeader: false
+  });
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      tabIndex: -1,
+      role: "gridcell",
+      "aria-colindex": index + 1,
+      id,
+      className: style,
+      children: /* @__PURE__ */ jsx("div", { className: "overflow-x-hidden overflow-ellipsis min-w-0 w-full", children: column.body(item, rowContext) })
+    }
+  );
+}
+function usePointerEvents({
+  onMoveStart,
+  onMove,
+  onMoveEnd,
+  minimumMovement = 0,
+  preventDefault,
+  stopPropagation = true,
+  onPress,
+  onLongPress,
+  ...props
+}) {
+  const stateRef = useRef({
+    lastPosition: { x: 0, y: 0 },
+    started: false,
+    longPressTriggered: false
+  });
+  const state = stateRef.current;
+  const { addGlobalListener, removeGlobalListener } = useGlobalListeners();
+  const start = (e) => {
+    if (!state.el)
+      return;
+    const result = onMoveStart == null ? void 0 : onMoveStart(e, state.el);
+    if (result === false)
+      return;
+    state.originalTouchAction = state.el.style.touchAction;
+    state.el.style.touchAction = "none";
+    state.originalUserSelect = document.documentElement.style.userSelect;
+    document.documentElement.style.userSelect = "none";
+    state.started = true;
+  };
+  const onPointerDown = (e) => {
+    var _a;
+    if (e.button === 0 && state.id == null) {
+      state.started = false;
+      const result = (_a = props.onPointerDown) == null ? void 0 : _a.call(props, e);
+      if (result === false)
+        return;
+      if (stopPropagation) {
+        e.stopPropagation();
+      }
+      if (preventDefault) {
+        e.preventDefault();
+      }
+      state.id = e.pointerId;
+      state.el = e.currentTarget;
+      state.lastPosition = { x: e.clientX, y: e.clientY };
+      if (onLongPress) {
+        state.longPressTimer = setTimeout(() => {
+          onLongPress(e, state.el);
+          state.longPressTriggered = true;
+        }, 400);
+      }
+      if (onMoveStart || onMove) {
+        addGlobalListener(window, "pointermove", onPointerMove, false);
+      }
+      addGlobalListener(window, "pointerup", onPointerUp, false);
+      addGlobalListener(window, "pointercancel", onPointerUp, false);
+    }
+  };
+  const onPointerMove = (e) => {
+    if (e.pointerId === state.id) {
+      const deltaX = e.clientX - state.lastPosition.x;
+      const deltaY = e.clientY - state.lastPosition.y;
+      if ((Math.abs(deltaX) >= minimumMovement || Math.abs(deltaY) >= minimumMovement) && !state.started) {
+        start(e);
+      }
+      if (state.started) {
+        onMove == null ? void 0 : onMove(e, deltaX, deltaY);
+        state.lastPosition = { x: e.clientX, y: e.clientY };
+      }
+    }
+  };
+  const onPointerUp = (e) => {
+    var _a;
+    if (e.pointerId === state.id) {
+      if (state.longPressTimer) {
+        clearTimeout(state.longPressTimer);
+      }
+      const longPressTriggered = state.longPressTriggered;
+      state.longPressTriggered = false;
+      if (state.started) {
+        onMoveEnd == null ? void 0 : onMoveEnd(e);
+      }
+      if (state.el) {
+        if (e.type !== "pointercancel") {
+          (_a = props.onPointerUp) == null ? void 0 : _a.call(props, e, state.el);
+          if (e.target && state.el.contains(e.target)) {
+            if (longPressTriggered) {
+              onLongPress == null ? void 0 : onLongPress(e, state.el);
+            } else {
+              onPress == null ? void 0 : onPress(e, state.el);
+            }
+          }
+        }
+        document.documentElement.style.userSelect = state.originalUserSelect || "";
+        state.el.style.touchAction = state.originalTouchAction || "";
+      }
+      state.id = void 0;
+      state.started = false;
+      removeGlobalListener(window, "pointermove", onPointerMove, false);
+      removeGlobalListener(window, "pointerup", onPointerUp, false);
+      removeGlobalListener(window, "pointercancel", onPointerUp, false);
+    }
+  };
+  return {
+    domProps: {
+      onPointerDown: createEventHandler(onPointerDown)
+    }
+  };
+}
+function isCtrlOrShiftPressed(e) {
+  return e.shiftKey || isCtrlKeyPressed(e);
+}
+function useTableRowStyle({ index, isSelected, isHeader }) {
+  const isDarkMode = useIsDarkMode();
+  const isMobile = useIsMobileMediaQuery();
+  const { hideBorder, enableSelection, collapseOnMobile, onAction } = useContext(TableContext);
+  const isFirst = index === 0;
+  return clsx(
+    "flex gap-x-16 break-inside-avoid outline-none border border-transparent",
+    onAction && "cursor-pointer",
+    isMobile && collapseOnMobile && hideBorder ? "mb-8 pl-8 pr-0 rounded" : "px-16",
+    !hideBorder && "border-b-divider",
+    !hideBorder && isFirst && "border-t-divider",
+    isSelected && !isDarkMode && "bg-primary/selected hover:bg-primary/focus focus-visible:bg-primary/focus",
+    isSelected && isDarkMode && "bg-selected hover:bg-focus focus-visible:bg-focus",
+    !isSelected && !isHeader && (enableSelection || onAction) && "focus-visible:bg-focus hover:bg-hover"
+  );
+}
+const interactableElements = ["button", "a", "input", "select", "textarea"];
+function TableRow({
+  item,
+  index,
+  renderAs,
+  className,
+  style
+}) {
+  const {
+    selectedRows,
+    columns,
+    toggleRow,
+    selectRow,
+    onAction,
+    selectRowOnContextMenu,
+    enableSelection,
+    selectionStyle,
+    hideHeaderRow
+  } = useContext(TableContext);
+  const isTouchDevice = useRef(false);
+  const isSelected = selectedRows.includes(item.id);
+  const [isHovered, setIsHovered] = useState(false);
+  const clickedOnInteractable = (e) => {
+    return e.target.closest(interactableElements.join(","));
+  };
+  const doubleClickHandler = (e) => {
+    if (selectionStyle === "highlight" && onAction && !isTouchDevice.current && !clickedOnInteractable(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+      onAction(item, index);
+    }
+  };
+  const anyRowsSelected = !!selectedRows.length;
+  const handleRowTap = (e) => {
+    if (clickedOnInteractable(e))
+      return;
+    if (selectionStyle === "checkbox") {
+      if (enableSelection && (anyRowsSelected || !onAction)) {
+        toggleRow(item);
+      } else if (onAction) {
+        onAction(item, index);
+      }
+    } else if (selectionStyle === "highlight") {
+      if (isTouchDevice.current) {
+        if (enableSelection && anyRowsSelected) {
+          toggleRow(item);
+        } else {
+          onAction == null ? void 0 : onAction(item, index);
+        }
+      } else if (enableSelection) {
+        selectRow(item, isCtrlOrShiftPressed(e));
+      }
+    }
+  };
+  const { domProps } = usePointerEvents({
+    onPointerDown: (e) => {
+      isTouchDevice.current = e.pointerType === "touch";
+    },
+    onPress: handleRowTap,
+    onLongPress: enableSelection ? () => {
+      if (isTouchDevice.current) {
+        toggleRow(item);
+      }
+    } : void 0
+  });
+  const keyboardHandler = (e) => {
+    if (enableSelection && e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (selectionStyle === "checkbox") {
+        toggleRow(item);
+      } else {
+        selectRow(item);
+      }
+    } else if (e.key === "Enter" && !selectedRows.length && onAction) {
+      e.preventDefault();
+      e.stopPropagation();
+      onAction(item, index);
+    }
+  };
+  const contextMenuHandler = (e) => {
+    if (selectRowOnContextMenu && enableSelection) {
+      if (!selectedRows.includes(item.id)) {
+        selectRow(item);
+      }
+    }
+    if (isTouchDevice.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+  const styleClassName = useTableRowStyle({ index, isSelected });
+  const RowElement = renderAs || "div";
+  return /* @__PURE__ */ jsx(
+    RowElement,
+    {
+      role: "row",
+      "aria-rowindex": index + 1 + (hideHeaderRow ? 0 : 1),
+      "aria-selected": isSelected,
+      tabIndex: -1,
+      className: clsx(className, styleClassName),
+      item: RowElement === "div" ? void 0 : item,
+      onDoubleClick: createEventHandler(doubleClickHandler),
+      onKeyDown: createEventHandler(keyboardHandler),
+      onContextMenu: createEventHandler(contextMenuHandler),
+      onPointerEnter: createEventHandler(() => setIsHovered(true)),
+      onPointerLeave: createEventHandler(() => setIsHovered(false)),
+      style,
+      ...domProps,
+      children: columns.map((column, cellIndex) => /* @__PURE__ */ jsx(
+        TableCell,
+        {
+          rowIndex: index,
+          rowIsHovered: isHovered,
+          index: cellIndex,
+          item
+        },
+        `${item.id}-${column.key}`
+      ))
+    }
+  );
+}
+const CheckboxColumnConfig = {
+  key: "checkbox",
+  header: () => /* @__PURE__ */ jsx(SelectAllCheckbox, {}),
+  align: "center",
+  width: "w-24 flex-shrink-0",
+  body: (item, row) => {
+    if (row.isPlaceholder) {
+      return /* @__PURE__ */ jsx(Skeleton, { size: "w-24 h-24", variant: "rect" });
+    }
+    return /* @__PURE__ */ jsx(SelectRowCheckbox, { item });
+  }
+};
+function SelectRowCheckbox({ item }) {
+  const { selectedRows, toggleRow } = useContext(TableContext);
+  return /* @__PURE__ */ jsx(
+    Checkbox,
+    {
+      checked: selectedRows.includes(item.id),
+      onChange: () => toggleRow(item)
+    }
+  );
+}
+function SelectAllCheckbox() {
+  const { trans } = useTrans();
+  const { data, selectedRows, onSelectionChange } = useContext(TableContext);
+  const allRowsSelected = !!data.length && data.length === selectedRows.length;
+  const someRowsSelected = !allRowsSelected && !!selectedRows.length;
+  return /* @__PURE__ */ jsx(
+    Checkbox,
+    {
+      "aria-label": trans({ message: "Select all" }),
+      isIndeterminate: someRowsSelected,
+      checked: allRowsSelected,
+      onChange: () => {
+        if (allRowsSelected) {
+          onSelectionChange([]);
+        } else {
+          onSelectionChange(data.map((d) => d.id));
+        }
+      }
+    }
+  );
+}
+const ArrowDownwardIcon = createSvgIcon(
+  /* @__PURE__ */ jsx("path", { d: "m20 12-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z" }),
+  "ArrowDownwardOutlined"
+);
+function HeaderCell({ index }) {
+  const { columns, sortDescriptor, onSortChange, enableSorting } = useContext(TableContext);
+  const column = columns[index];
+  const style = useTableCellStyle({
+    index,
+    isHeader: true
+  });
+  const [isHovered, setIsHovered] = useState(false);
+  const sortingKey = column.sortingKey || column.key;
+  const allowSorting = column.allowsSorting && enableSorting;
+  const { orderBy, orderDir } = sortDescriptor || {};
+  const sortActive = allowSorting && orderBy === sortingKey;
+  let ariaSort;
+  if (sortActive && orderDir === "asc") {
+    ariaSort = "ascending";
+  } else if (sortActive && orderDir === "desc") {
+    ariaSort = "descending";
+  } else if (allowSorting) {
+    ariaSort = "none";
+  }
+  const toggleSorting = () => {
+    if (!allowSorting)
+      return;
+    let newSort;
+    if (sortActive && orderDir === "desc") {
+      newSort = { orderDir: "asc", orderBy: sortingKey };
+    } else if (sortActive && orderDir === "asc") {
+      newSort = { orderBy: void 0, orderDir: void 0 };
+    } else {
+      newSort = { orderDir: "desc", orderBy: sortingKey };
+    }
+    onSortChange == null ? void 0 : onSortChange(newSort);
+  };
+  const sortVisible = sortActive || isHovered;
+  const sortVariants = {
+    visible: { opacity: 1, y: 0 },
+    hidden: { opacity: 0, y: "-25%" }
+  };
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      role: "columnheader",
+      tabIndex: -1,
+      "aria-colindex": index + 1,
+      "aria-sort": ariaSort,
+      className: clsx(
+        style,
+        "text-muted font-medium text-xs",
+        allowSorting && "cursor-pointer"
+      ),
+      onMouseEnter: () => {
+        setIsHovered(true);
+      },
+      onMouseLeave: () => {
+        setIsHovered(false);
+      },
+      onKeyDown: (e) => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          toggleSorting();
+        }
+      },
+      onClick: toggleSorting,
+      children: [
+        column.hideHeader ? /* @__PURE__ */ jsx("div", { className: "sr-only", children: column.header() }) : column.header(),
+        /* @__PURE__ */ jsx(AnimatePresence, { children: allowSorting && /* @__PURE__ */ jsx(
+          m.span,
+          {
+            variants: sortVariants,
+            animate: sortVisible ? "visible" : "hidden",
+            initial: false,
+            transition: { type: "tween" },
+            className: "inline-block ml-6 -mt-2",
+            "data-testid": "table-sort-button",
+            "aria-hidden": !sortVisible,
+            children: /* @__PURE__ */ jsx(
+              ArrowDownwardIcon,
+              {
+                size: "xs",
+                className: clsx(
+                  "text-muted",
+                  orderDir === "asc" && orderBy === sortingKey && "rotate-180 transition-transform"
+                )
+              }
+            )
+          },
+          "sort-icon"
+        ) })
+      ]
+    }
+  );
+}
+function TableHeaderRow() {
+  const { columns } = useContext(TableContext);
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      role: "row",
+      "aria-rowindex": 1,
+      tabIndex: -1,
+      className: "flex gap-x-16 px-16",
+      children: columns.map((column, columnIndex) => /* @__PURE__ */ jsx(HeaderCell, { index: columnIndex }, column.key))
+    }
+  );
+}
+function Table({
+  className,
+  columns: userColumns,
+  collapseOnMobile = true,
+  hideHeaderRow = false,
+  hideBorder = false,
+  data,
+  selectedRows: propsSelectedRows,
+  defaultSelectedRows: propsDefaultSelectedRows,
+  onSelectionChange: propsOnSelectionChange,
+  sortDescriptor: propsSortDescriptor,
+  onSortChange: propsOnSortChange,
+  enableSorting = true,
+  onDelete,
+  enableSelection = true,
+  selectionStyle = "checkbox",
+  ariaLabelledBy,
+  selectRowOnContextMenu,
+  onAction,
+  renderRowAs,
+  tableBody,
+  meta,
+  tableRef: propsTableRef,
+  closeOnInteractOutside = false,
+  cellHeight,
+  headerCellHeight,
+  ...domProps
+}) {
+  const isMobile = useIsMobileMediaQuery();
+  const isCollapsedMode = !!isMobile && collapseOnMobile;
+  if (isCollapsedMode) {
+    hideHeaderRow = true;
+    hideBorder = true;
+  }
+  const [selectedRows, onSelectionChange] = useControlledState(
+    propsSelectedRows,
+    propsDefaultSelectedRows || [],
+    propsOnSelectionChange
+  );
+  const [sortDescriptor, onSortChange] = useControlledState(
+    propsSortDescriptor,
+    void 0,
+    propsOnSortChange
+  );
+  const toggleRow = useCallback(
+    (item) => {
+      const newValues = [...selectedRows];
+      if (!newValues.includes(item.id)) {
+        newValues.push(item.id);
+      } else {
+        const index = newValues.indexOf(item.id);
+        newValues.splice(index, 1);
+      }
+      onSelectionChange(newValues);
+    },
+    [selectedRows, onSelectionChange]
+  );
+  const selectRow = useCallback(
+    // allow deselecting all rows by passing in null
+    (item, merge) => {
+      let newValues = [];
+      if (item) {
+        newValues = merge ? [...selectedRows == null ? void 0 : selectedRows.filter((id) => id !== item.id), item.id] : [item.id];
+      }
+      onSelectionChange(newValues);
+    },
+    [selectedRows, onSelectionChange]
+  );
+  const columns = useMemo(() => {
+    const filteredColumns = userColumns.filter((c) => {
+      const visibleInMode = c.visibleInMode || "regular";
+      if (visibleInMode === "all") {
+        return true;
+      }
+      if (visibleInMode === "compact" && isCollapsedMode) {
+        return true;
+      }
+      if (visibleInMode === "regular" && !isCollapsedMode) {
+        return true;
+      }
+    });
+    const showCheckboxCell = enableSelection && selectionStyle !== "highlight" && !isMobile;
+    if (showCheckboxCell) {
+      filteredColumns.unshift(CheckboxColumnConfig);
+    }
+    return filteredColumns;
+  }, [isMobile, userColumns, enableSelection, selectionStyle, isCollapsedMode]);
+  const contextValue = {
+    isCollapsedMode,
+    cellHeight,
+    headerCellHeight,
+    hideBorder,
+    hideHeaderRow,
+    selectedRows,
+    onSelectionChange,
+    enableSorting,
+    enableSelection,
+    selectionStyle,
+    data,
+    columns,
+    sortDescriptor,
+    onSortChange,
+    toggleRow,
+    selectRow,
+    onAction,
+    selectRowOnContextMenu,
+    meta,
+    collapseOnMobile
+  };
+  const navProps = useGridNavigation({
+    cellCount: enableSelection ? columns.length + 1 : columns.length,
+    rowCount: data.length + 1
+  });
+  const tableBodyProps = {
+    renderRowAs
+  };
+  if (!tableBody) {
+    tableBody = /* @__PURE__ */ jsx(BasicTableBody, { ...tableBodyProps });
+  } else {
+    tableBody = cloneElement(tableBody, tableBodyProps);
+  }
+  const tableRef = useObjectRef(propsTableRef);
+  useInteractOutside({
+    ref: tableRef,
+    onInteractOutside: (e) => {
+      if (closeOnInteractOutside && enableSelection && (selectedRows == null ? void 0 : selectedRows.length) && // don't deselect if clicking on a dialog (for example is table row has a context menu)
+      !e.target.closest('[role="dialog"]')) {
+        onSelectionChange([]);
+      }
+    }
+  });
+  return /* @__PURE__ */ jsx(TableContext.Provider, { value: contextValue, children: /* @__PURE__ */ jsxs(
+    "div",
+    {
+      ...mergeProps(domProps, navProps, {
+        onKeyDown: (e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (selectedRows == null ? void 0 : selectedRows.length) {
+              onSelectionChange([]);
+            }
+          } else if (e.key === "Delete") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (selectedRows == null ? void 0 : selectedRows.length) {
+              onDelete == null ? void 0 : onDelete(
+                data.filter((item) => selectedRows == null ? void 0 : selectedRows.includes(item.id))
+              );
+            }
+          } else if (isCtrlKeyPressed(e) && e.key === "a") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (enableSelection) {
+              onSelectionChange(data.map((item) => item.id));
+            }
+          }
+        }
+      }),
+      role: "grid",
+      tabIndex: 0,
+      "aria-rowcount": data.length + 1,
+      "aria-colcount": columns.length + 1,
+      ref: tableRef,
+      "aria-multiselectable": enableSelection ? true : void 0,
+      "aria-labelledby": ariaLabelledBy,
+      className: clsx(
+        className,
+        "isolate select-none text-sm outline-none focus-visible:ring-2"
+      ),
+      children: [
+        !hideHeaderRow && /* @__PURE__ */ jsx(TableHeaderRow, {}),
+        tableBody
+      ]
     }
   ) });
+}
+function BasicTableBody({ renderRowAs }) {
+  const { data } = useContext(TableContext);
+  return /* @__PURE__ */ jsx(Fragment, { children: data.map((item, rowIndex) => /* @__PURE__ */ jsx(
+    TableRow,
+    {
+      item,
+      index: rowIndex,
+      renderAs: renderRowAs
+    },
+    item.id
+  )) });
+}
+function DataTableEmptyStateMessage({
+  isFiltering,
+  title,
+  filteringTitle,
+  image,
+  size: size2,
+  className
+}) {
+  const isMobile = useIsMobileMediaQuery();
+  if (!size2) {
+    size2 = isMobile ? "sm" : "md";
+  }
+  return /* @__PURE__ */ jsx(
+    IllustratedMessage,
+    {
+      className,
+      size: size2,
+      image: /* @__PURE__ */ jsx(SvgImage, { src: image }),
+      title: isFiltering && filteringTitle ? filteringTitle : title,
+      description: isFiltering && filteringTitle ? /* @__PURE__ */ jsx(Trans, { message: "Try another search query or different filters" }) : void 0
+    }
+  );
+}
+const searchImage = "/assets/search-23f1a0a1.svg";
+function hasNextPage(pagination) {
+  if ("next_cursor" in pagination) {
+    return pagination.next_cursor != null;
+  }
+  if ("last_page" in pagination) {
+    return pagination.current_page < pagination.last_page;
+  }
+  return pagination.data.length > 0 && pagination.data.length >= pagination.per_page;
+}
+const KeyboardArrowLeftIcon = createSvgIcon(
+  /* @__PURE__ */ jsx("path", { d: "M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" }),
+  "KeyboardArrowLeftOutlined"
+);
+const defaultPerPage$1 = 15;
+const perPageOptions = [{ key: 10 }, { key: 15 }, { key: 20 }, { key: 50 }, { key: 100 }];
+function DataTablePaginationFooter({
+  query,
+  onPerPageChange,
+  onPageChange,
+  className
+}) {
+  var _a;
+  const isMobile = useIsMobileMediaQuery();
+  const numberFormatter = useNumberFormatter();
+  const pagination = (_a = query.data) == null ? void 0 : _a.pagination;
+  if (!pagination)
+    return null;
+  const perPageSelect = onPerPageChange ? /* @__PURE__ */ jsx(
+    SelectForwardRef,
+    {
+      minWidth: "min-w-auto",
+      selectionMode: "single",
+      disabled: query.isLoading,
+      labelPosition: "side",
+      size: "xs",
+      label: /* @__PURE__ */ jsx(Trans, { message: "Items per page" }),
+      selectedValue: pagination.per_page || defaultPerPage$1,
+      onSelectionChange: (value) => onPerPageChange(value),
+      children: perPageOptions.map((option) => /* @__PURE__ */ jsx(Item$1, { value: option.key, children: option.key }, option.key))
+    }
+  ) : null;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: clsx(
+        "flex h-54 select-none items-center justify-end gap-20 px-20",
+        className
+      ),
+      children: [
+        !isMobile && perPageSelect,
+        pagination.from && pagination.to && "total" in pagination && /* @__PURE__ */ jsx("div", { className: "text-sm", children: /* @__PURE__ */ jsx(
+          Trans,
+          {
+            message: ":from - :to of :total",
+            values: {
+              from: pagination.from,
+              to: pagination.to,
+              total: numberFormatter.format(pagination.total)
+            }
+          }
+        ) }),
+        /* @__PURE__ */ jsxs("div", { className: "text-muted", children: [
+          /* @__PURE__ */ jsx(
+            IconButton,
+            {
+              disabled: query.isFetching || pagination.current_page < 2,
+              onClick: () => {
+                onPageChange == null ? void 0 : onPageChange((pagination == null ? void 0 : pagination.current_page) - 1);
+              },
+              children: /* @__PURE__ */ jsx(KeyboardArrowLeftIcon, {})
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            IconButton,
+            {
+              disabled: query.isFetching || !hasNextPage(pagination),
+              onClick: () => {
+                onPageChange == null ? void 0 : onPageChange((pagination == null ? void 0 : pagination.current_page) + 1);
+              },
+              children: /* @__PURE__ */ jsx(KeyboardArrowRightIcon, {})
+            }
+          )
+        ] })
+      ]
+    }
+  );
+}
+const CustomerTicketTableColumns = [
+  {
+    key: "subject",
+    visibleInMode: "all",
+    header: () => /* @__PURE__ */ jsx(Trans, { message: "Subject" }),
+    body: (ticket) => ticket.subject,
+    width: "flex-3 min-w-200"
+  },
+  {
+    key: "id",
+    allowsSorting: true,
+    header: () => /* @__PURE__ */ jsx(Trans, { message: "Id" }),
+    width: "w-90",
+    body: (ticket) => `#${ticket.id}`
+  },
+  {
+    key: "Created",
+    allowsSorting: true,
+    header: () => /* @__PURE__ */ jsx(Trans, { message: "Created" }),
+    width: "w-144",
+    body: (ticket) => /* @__PURE__ */ jsx(FormattedRelativeTime, { date: ticket.created_at })
+  },
+  {
+    key: "updated_at",
+    allowsSorting: true,
+    header: () => /* @__PURE__ */ jsx(Trans, { message: "Last updated" }),
+    width: "w-144",
+    body: (ticket) => /* @__PURE__ */ jsx(FormattedRelativeTime, { date: ticket.updated_at })
+  },
+  {
+    key: "status",
+    header: () => /* @__PURE__ */ jsx(Trans, { message: "Status" }),
+    visibleInMode: "all",
+    width: "w-80",
+    body: (ticket) => /* @__PURE__ */ jsx("div", { className: "w-max", children: /* @__PURE__ */ jsx(
+      Chip,
+      {
+        size: "sm",
+        color: !ticket.closed_at ? "primary" : void 0,
+        radius: "rounded-md",
+        className: "font-medium capitalize",
+        children: /* @__PURE__ */ jsx(Trans, { message: ticket.status })
+      }
+    ) })
+  }
+];
+const ChevronRightIcon = createSvgIcon(
+  /* @__PURE__ */ jsx("path", { d: "M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z" }),
+  "ChevronRightOutlined"
+);
+function BreadcrumbItem(props) {
+  const {
+    isCurrent,
+    sizeStyle: sizeStyle2,
+    isMenuTrigger,
+    isClickable,
+    isDisabled,
+    onSelected,
+    className,
+    isMenuItem,
+    isLink
+  } = props;
+  const children = typeof props.children === "function" ? props.children({ isMenuItem }) : props.children;
+  if (isMenuItem) {
+    return children;
+  }
+  const domProps = isMenuTrigger ? {} : {
+    tabIndex: isLink && !isDisabled ? 0 : void 0,
+    role: isLink ? "link" : void 0,
+    "aria-disabled": isLink ? isDisabled : void 0,
+    "aria-current": isCurrent && isLink ? "page" : void 0,
+    onClick: () => onSelected == null ? void 0 : onSelected()
+  };
+  return /* @__PURE__ */ jsxs(
+    "li",
+    {
+      className: clsx(
+        `relative inline-flex min-w-0 flex-shrink-0 items-center justify-start ${sizeStyle2 == null ? void 0 : sizeStyle2.font}`,
+        (!isClickable || isDisabled) && "pointer-events-none",
+        !isCurrent && isDisabled && "text-disabled"
+      ),
+      children: [
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            ...domProps,
+            className: clsx(
+              className,
+              "cursor-pointer overflow-hidden whitespace-nowrap rounded px-8",
+              !isMenuTrigger && "py-4 hover:bg-hover",
+              !isMenuTrigger && isLink && "outline-none focus-visible:ring"
+            ),
+            children
+          }
+        ),
+        isCurrent === false && /* @__PURE__ */ jsx(
+          ChevronRightIcon,
+          {
+            size: sizeStyle2 == null ? void 0 : sizeStyle2.icon,
+            className: clsx(isDisabled ? "text-disabled" : "text-muted")
+          }
+        )
+      ]
+    }
+  );
+}
+const MoreHorizIcon = createSvgIcon(
+  /* @__PURE__ */ jsx("path", { d: "M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" }),
+  "MoreHorizOutlined"
+);
+const MIN_VISIBLE_ITEMS = 1;
+const MAX_VISIBLE_ITEMS = 10;
+function Breadcrumb(props) {
+  const {
+    size: size2 = "md",
+    children,
+    isDisabled,
+    className,
+    currentIsClickable,
+    isNavigation
+  } = props;
+  const { trans } = useTrans();
+  const style = sizeStyle(size2);
+  const childArray = [];
+  React.Children.forEach(children, (child) => {
+    if (React.isValidElement(child)) {
+      childArray.push(child);
+    }
+  });
+  const domRef = useRef(null);
+  const listRef = useRef(null);
+  const [visibleItems, setVisibleItems] = useValueEffect(childArray.length);
+  const updateOverflow = useCallback(() => {
+    const computeVisibleItems = (itemCount) => {
+      var _a;
+      const currListRef = listRef.current;
+      if (!currListRef) {
+        return;
+      }
+      const listItems = Array.from(currListRef.children);
+      if (!listItems.length)
+        return;
+      const containerWidth = currListRef.offsetWidth;
+      const isShowingMenu = childArray.length > itemCount;
+      let calculatedWidth = 0;
+      let newVisibleItems = 0;
+      let maxVisibleItems = MAX_VISIBLE_ITEMS;
+      calculatedWidth += listItems.shift().offsetWidth;
+      newVisibleItems++;
+      if (isShowingMenu) {
+        calculatedWidth += ((_a = listItems.shift()) == null ? void 0 : _a.offsetWidth) ?? 0;
+        maxVisibleItems--;
+      }
+      if (calculatedWidth >= containerWidth) {
+        newVisibleItems--;
+      }
+      if (listItems.length > 0) {
+        const last = listItems.pop();
+        last.style.overflow = "visible";
+        calculatedWidth += last.offsetWidth;
+        if (calculatedWidth < containerWidth) {
+          newVisibleItems++;
+        }
+        last.style.overflow = "";
+      }
+      for (const breadcrumb of listItems.reverse()) {
+        calculatedWidth += breadcrumb.offsetWidth;
+        if (calculatedWidth < containerWidth) {
+          newVisibleItems++;
+        }
+      }
+      return Math.max(
+        MIN_VISIBLE_ITEMS,
+        Math.min(maxVisibleItems, newVisibleItems)
+      );
+    };
+    setVisibleItems(function* () {
+      yield childArray.length;
+      const newVisibleItems = computeVisibleItems(childArray.length);
+      yield newVisibleItems;
+      if (newVisibleItems < childArray.length && newVisibleItems > 1) {
+        yield computeVisibleItems(newVisibleItems);
+      }
+    });
+  }, [listRef, children, setVisibleItems]);
+  useResizeObserver({ ref: domRef, onResize: updateOverflow });
+  useLayoutEffect(updateOverflow, [children]);
+  let contents = childArray;
+  if (childArray.length > visibleItems) {
+    const selectedKey = childArray.length - 1;
+    const menuItem = /* @__PURE__ */ jsx(BreadcrumbItem, { sizeStyle: style, isMenuTrigger: true, children: /* @__PURE__ */ jsxs(MenuTrigger, { selectionMode: "single", selectedValue: selectedKey, children: [
+      /* @__PURE__ */ jsx(IconButton, { "aria-label": "…", disabled: isDisabled, size: style.btn, children: /* @__PURE__ */ jsx(MoreHorizIcon, {}) }),
+      /* @__PURE__ */ jsx(Menu, { children: childArray.map((child, index) => {
+        const isLast = selectedKey === index;
+        return /* @__PURE__ */ jsx(
+          Item$1,
+          {
+            value: index,
+            onSelected: () => {
+              var _a, _b;
+              if (!isLast) {
+                (_b = (_a = child.props).onSelected) == null ? void 0 : _b.call(_a);
+              }
+            },
+            children: cloneElement(child, { isMenuItem: true })
+          },
+          index
+        );
+      }) })
+    ] }) }, "menu");
+    contents = [menuItem];
+    const breadcrumbs = [...childArray];
+    let endItems = visibleItems;
+    if (visibleItems > 1) {
+      contents.unshift(breadcrumbs.shift());
+      endItems--;
+    }
+    contents.push(...breadcrumbs.slice(-endItems));
+  }
+  const lastIndex = contents.length - 1;
+  const breadcrumbItems = contents.map((child, index) => {
+    const isCurrent = index === lastIndex;
+    const isClickable = !isCurrent || currentIsClickable;
+    return cloneElement(child, {
+      key: child.key || index,
+      isCurrent,
+      sizeStyle: style,
+      isClickable,
+      isDisabled,
+      isLink: isNavigation && child.key !== "menu"
+    });
+  });
+  const Element = isNavigation ? "nav" : "div";
+  return /* @__PURE__ */ jsx(
+    Element,
+    {
+      className: clsx(className, "w-full min-w-0"),
+      "aria-label": trans({ message: "Breadcrumbs" }),
+      ref: domRef,
+      children: /* @__PURE__ */ jsx(
+        "ol",
+        {
+          ref: listRef,
+          className: clsx("flex flex-nowrap justify-start", style.minHeight),
+          children: breadcrumbItems
+        }
+      )
+    }
+  );
+}
+function sizeStyle(size2) {
+  switch (size2) {
+    case "sm":
+      return { font: "text-sm", icon: "sm", btn: "sm", minHeight: "min-h-36" };
+    case "lg":
+      return { font: "text-lg", icon: "md", btn: "md", minHeight: "min-h-42" };
+    case "xl":
+      return { font: "text-xl", icon: "md", btn: "md", minHeight: "min-h-42" };
+    default:
+      return { font: "text-base", icon: "md", btn: "md", minHeight: "min-h-42" };
+  }
+}
+const defaultPage = "1";
+const defaultPerPage = "20";
+function CustomerTicketListPage() {
+  const navigate = useNavigate();
+  return /* @__PURE__ */ jsxs("div", { children: [
+    /* @__PURE__ */ jsx(Navbar, { menuPosition: "header", children: /* @__PURE__ */ jsx(HcSearchBar, {}) }),
+    /* @__PURE__ */ jsxs("main", { className: "container mx-auto px-24 pb-48", children: [
+      /* @__PURE__ */ jsxs(Breadcrumb, { size: "sm", className: "mb-48 mt-34", children: [
+        /* @__PURE__ */ jsx(BreadcrumbItem, { onSelected: () => navigate(`/hc`), children: /* @__PURE__ */ jsx(Trans, { message: "Help center" }) }),
+        /* @__PURE__ */ jsx(BreadcrumbItem, { onSelected: () => navigate(`/hc/tickets`), children: /* @__PURE__ */ jsx(Trans, { message: "Requests" }) })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "mb-34 flex items-start justify-between gap-12", children: [
+        /* @__PURE__ */ jsx("h1", { className: "text-3xl font-semibold", children: /* @__PURE__ */ jsx(Trans, { message: "My requests" }) }),
+        /* @__PURE__ */ jsx(
+          Button,
+          {
+            elementType: Link,
+            to: "/hc/tickets/new",
+            size: "sm",
+            variant: "outline",
+            children: /* @__PURE__ */ jsx(Trans, { message: "New request" })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsx(TicketTable, {})
+    ] })
+  ] });
+}
+function TicketTable() {
+  var _a, _b;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { trans } = useTrans();
+  const inputRef = useRef(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const query = useTickets({
+    userId: user.id,
+    query: searchParams.get("query"),
+    tagId: searchParams.get("tagId"),
+    page: searchParams.get("page") || defaultPage,
+    perPage: searchParams.get("perPage") || defaultPerPage
+  });
+  const data = ((_b = (_a = query.data) == null ? void 0 : _a.pagination) == null ? void 0 : _b.data) || [];
+  const isFiltering = !!searchParams.get("query") || !!searchParams.get("tagId");
+  const setSearchQuery = () => {
+    setSearchParams((prev) => {
+      var _a2;
+      if ((_a2 = inputRef.current) == null ? void 0 : _a2.value) {
+        prev.set("query", inputRef.current.value);
+      } else {
+        prev.delete("query");
+      }
+      return prev;
+    });
+  };
+  const content = !data.length ? /* @__PURE__ */ jsx(StateMessage, { isFiltering }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsx(
+      Table,
+      {
+        columns: CustomerTicketTableColumns,
+        data,
+        enableSelection: false,
+        onAction: (item) => navigate(`/hc/tickets/${item.id}`),
+        cellHeight: "h-60"
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      DataTablePaginationFooter,
+      {
+        className: "mt-12",
+        query,
+        onPageChange: (page) => setSearchParams((prev) => {
+          prev.set("page", page.toString());
+          return prev;
+        })
+      }
+    )
+  ] });
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsxs(
+      "form",
+      {
+        className: "mb-34 items-end justify-between gap-24 md:flex",
+        onSubmit: (e) => {
+          e.preventDefault();
+          setSearchQuery();
+        },
+        children: [
+          /* @__PURE__ */ jsx(
+            TextField,
+            {
+              className: "flex-auto max-md:mb-24",
+              inputRef,
+              defaultValue: searchParams.get("query") || "",
+              onBlur: () => setSearchQuery(),
+              placeholder: trans(message("Search requests")),
+              startAdornment: /* @__PURE__ */ jsx(SearchIcon, {})
+            }
+          ),
+          /* @__PURE__ */ jsx(StatusSelect, {})
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsx(AnimatePresence, { initial: false, mode: "wait", children: query.isLoading ? /* @__PURE__ */ jsx(Skeletons, {}) : content })
+  ] });
+}
+function StateMessage({ isFiltering }) {
+  return /* @__PURE__ */ jsx(
+    DataTableEmptyStateMessage,
+    {
+      isFiltering,
+      size: "sm",
+      className: "mt-48",
+      image: searchImage,
+      title: /* @__PURE__ */ jsx(Trans, { message: "You have not created any requests yet" }),
+      filteringTitle: /* @__PURE__ */ jsx(Trans, { message: "No requests match your search query or filters" })
+    }
+  );
+}
+function StatusSelect() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  return /* @__PURE__ */ jsxs(
+    SelectForwardRef,
+    {
+      className: "flex-shrink-0 md:min-w-172",
+      selectionMode: "single",
+      selectedValue: searchParams.get("tagId") || "",
+      onSelectionChange: (newValue) => {
+        setSearchParams((prev) => {
+          if (newValue) {
+            prev.set("tagId", `${newValue}`);
+          } else {
+            prev.delete("tagId");
+          }
+          return prev;
+        });
+      },
+      children: [
+        /* @__PURE__ */ jsx(Item$1, { value: "", children: /* @__PURE__ */ jsx(Trans, { message: "All requests" }) }),
+        /* @__PURE__ */ jsx(Item$1, { value: "open", children: /* @__PURE__ */ jsx(Trans, { message: "Open requests" }) }),
+        /* @__PURE__ */ jsx(Item$1, { value: "closed", children: /* @__PURE__ */ jsx(Trans, { message: "Closed requests" }) }),
+        /* @__PURE__ */ jsx(Item$1, { value: "pending", children: /* @__PURE__ */ jsx(Trans, { message: "Awaiting your reply" }) })
+      ]
+    }
+  );
+}
+function Skeletons() {
+  return /* @__PURE__ */ jsxs(m.div, { ...opacityAnimation, children: [
+    /* @__PURE__ */ jsx(Skeleton, { size: "h-36", variant: "rect", className: "mb-12" }),
+    /* @__PURE__ */ jsx(Skeleton, { size: "h-54", variant: "rect", className: "mb-12" }),
+    /* @__PURE__ */ jsx(Skeleton, { size: "h-54", variant: "rect" })
+  ] }, "skeletons");
+}
+function HomeTickets() {
+  var _a;
+  const { user } = useAuth();
+  const role = Boolean((_a = user == null ? void 0 : user.roles) == null ? void 0 : _a.find((role2) => role2.name === "customers"));
+  const id = user == null ? void 0 : user.id;
+  const query = useTickets$1(id);
+  if (!user)
+    return;
+  return /* @__PURE__ */ jsx(Fragment$1, { children: query && role ? /* @__PURE__ */ jsxs(Fragment$1, { children: [
+    /* @__PURE__ */ jsxs("div", { className: "mb-34 flex items-start justify-between gap-12", children: [
+      /* @__PURE__ */ jsx("h1", { className: "text-3xl font-semibold", children: /* @__PURE__ */ jsx(Trans, { message: "My requests" }) }),
+      /* @__PURE__ */ jsx(
+        Button,
+        {
+          elementType: Link,
+          to: "/hc/tickets/new",
+          size: "sm",
+          variant: "outline",
+          children: /* @__PURE__ */ jsx(Trans, { message: "New request" })
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx(TicketTable, {})
+  ] }) : /* @__PURE__ */ jsx(
+    NavLink,
+    {
+      to: "/admin",
+      children: "Go to Admin"
+    }
+  ) });
+}
+function LandingPage() {
+  var _a, _b;
+  const query = useLandingPage();
+  const { landing } = useSettings();
+  return /* @__PURE__ */ jsxs(Layout, { children: [
+    query.data ? ((_a = landing == null ? void 0 : landing.content) == null ? void 0 : _a.variant) === "multiProduct" ? /* @__PURE__ */ jsx(MultiProductArticleGrid, { data: query.data }) : /* @__PURE__ */ jsx(ArticleGrid, { data: query.data }) : /* @__PURE__ */ jsx(
+      PageStatus,
+      {
+        query,
+        show404: false,
+        delayedSpinner: false,
+        loaderIsScreen: false
+      }
+    ),
+    ((_b = landing == null ? void 0 : landing.content) == null ? void 0 : _b.variant) === "homeTickets" && /* @__PURE__ */ jsx(HomeTickets, {})
+  ] });
 }
 function Layout({ children }) {
   var _a;
@@ -12412,11 +14006,11 @@ function Layout({ children }) {
     (landing == null ? void 0 : landing.show_footer) && /* @__PURE__ */ jsx(Footer, { className: "px-40" })
   ] });
 }
-const HelpCenterRoutes = React.lazy(() => import("./assets/hc-routes-3423b88d.mjs").then((n) => n.h));
-const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-f9323dd8.mjs"));
-const AdminRoutes = React.lazy(() => import("./assets/admin-routes-6a4db8d9.mjs").then((n) => n.B));
+const HelpCenterRoutes = React.lazy(() => import("./assets/hc-routes-a41bf25b.mjs"));
+const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-c5ef5570.mjs"));
+const AdminRoutes = React.lazy(() => import("./assets/admin-routes-071a95b8.mjs").then((n) => n.B));
 const SwaggerApiDocs = React.lazy(
-  () => import("./assets/swagger-api-docs-page-a4c9a342.mjs")
+  () => import("./assets/swagger-api-docs-page-140d0a3b.mjs")
 );
 function AppRoutes() {
   const { billing, notifications, require_email_confirmation, api } = useSettings();
@@ -12583,192 +14177,211 @@ async function takeScreenshot(request, response) {
 }
 console.log(`Starting SSR server on port ${port}...`);
 export {
-  ConfirmationDialog as $,
+  useDialogContext as $,
   ArticleLink as A,
-  Button as B,
+  Breadcrumb as B,
   CloseIcon as C,
-  DialogTrigger as D,
-  IllustratedMessage as E,
-  SvgImage as F,
-  LandingPage as G,
-  AuthRoute as H,
+  DataTablePaginationFooter as D,
+  FormattedRelativeTime as E,
+  FullPageLoader as F,
+  Chip as G,
+  HcSearchBar as H,
   IconButton as I,
-  FullPageLoader as J,
-  NotFoundPage as K,
+  Table as J,
+  queryClient as K,
   Logo as L,
-  FormattedRelativeTime as M,
+  toast as M,
   Navbar as N,
-  Chip as O,
+  message as O,
   PageMetaTags as P,
-  queryClient as Q,
-  toast as R,
-  SearchIcon as S,
+  Tooltip as Q,
+  createSvgIcon as R,
+  Skeleton as S,
   Trans as T,
-  Tooltip as U,
-  createSvgIcon as V,
-  MenuTrigger as W,
-  KeyboardArrowDownIcon as X,
-  Menu as Y,
-  DialogHeader as Z,
-  DialogFooter as _,
+  useKeybind as U,
+  MenuTrigger as V,
+  KeyboardArrowDownIcon as W,
+  Menu as X,
+  Item$1 as Y,
+  DialogTrigger as Z,
+  useTrans as _,
   useSettings as a,
-  slugifyString as a$,
-  useAutoFocus as a0,
-  SettingsIcon as a1,
-  TextField as a2,
-  FormattedDate as a3,
-  useLocalStorage as a4,
-  FileUploadProvider as a5,
-  openDialog as a6,
-  ErrorIcon as a7,
-  closeDialog as a8,
-  updateTicketQuery as a9,
-  StaticPageTitle as aA,
-  useAppearanceEditorMode as aB,
-  ProgressCircle as aC,
-  List as aD,
-  ListItem as aE,
-  clamp as aF,
-  createSvgIconFromTree as aG,
-  DoneAllIcon as aH,
-  Section as aI,
-  useBootstrapData as aJ,
-  SiteConfigContext as aK,
-  useIsMobileMediaQuery as aL,
-  SelectForwardRef as aM,
-  ProgressBar as aN,
-  ExternalLink as aO,
-  openUploadWindow as aP,
-  useSocialLogin as aQ,
-  removeEmptyValuesFromObject as aR,
-  FormRadioGroup as aS,
-  FormRadio as aT,
-  DateFormatPresets as aU,
-  prettyBytes as aV,
-  useField as aW,
-  Field as aX,
-  useResendVerificationEmail as aY,
-  useUploadAvatar as aZ,
-  useRemoveAvatar as a_,
-  useSyncEnvatoPurchases as aa,
-  PersonIcon as ab,
-  useTicket as ac,
-  onFormQueryError as ad,
-  Form as ae,
-  ButtonBase as af,
-  CheckCircleIcon as ag,
-  useTicketHcCategories as ah,
-  getFromLocalStorage as ai,
-  ArrowDropDownIcon as aj,
-  Helmet as ak,
-  getInputFieldClassNames as al,
-  FormTextField as am,
-  FormSelect as an,
-  useValueLists as ao,
-  TimezoneSelect as ap,
-  useUser as aq,
-  prefetchValueLists as ar,
-  useCallbackRef as as,
-  CustomMenu as at,
-  LoginIcon as au,
-  RadioGroup as av,
-  Radio as aw,
-  FormImageSelector as ax,
-  KeyboardArrowRightIcon as ay,
-  MixedText as az,
-  Dialog as b,
-  SmartphoneIcon as b$,
-  useProducts as b0,
-  FormattedPrice as b1,
-  useMediaQuery as b2,
-  rootEl as b3,
-  createEventHandler as b4,
-  WarningIcon as b5,
-  Checkbox as b6,
-  useFileUploadStore as b7,
-  shallowEqual as b8,
-  useSelectedLocale as b9,
-  isAbsoluteUrl as bA,
-  useActiveUpload as bB,
-  UploadInputType as bC,
-  Disk as bD,
-  AccountCircleIcon as bE,
-  AddAPhotoIcon as bF,
-  ApiIcon as bG,
-  CheckBoxOutlineBlankIcon as bH,
-  ComputerIcon as bI,
-  DangerousIcon as bJ,
-  DarkModeIcon as bK,
-  DevicesIcon as bL,
-  EastIcon as bM,
-  ErrorOutlineIcon as bN,
-  ExitToAppIcon as bO,
-  FileDownloadDoneIcon as bP,
-  ForumIcon as bQ,
-  GroupAddIcon as bR,
-  LanguageIcon as bS,
-  LightModeIcon as bT,
-  LightbulbIcon as bU,
-  LockIcon as bV,
-  MenuIcon as bW,
-  NotificationsIcon as bX,
-  PaymentsIcon as bY,
-  PeopleIcon as bZ,
-  PhonelinkLockIcon as b_,
-  useDateFormatter as ba,
-  useThemeSelector as bb,
-  lazyLoader as bc,
-  useSpinDelay as bd,
-  PageErrorMessage as be,
-  useCustomPage as bf,
-  useCollator as bg,
-  loadFonts as bh,
-  useUserTimezone as bi,
-  useListbox as bj,
-  Listbox as bk,
-  Popover as bl,
-  useListboxKeyboardNavigation as bm,
-  useNumberFormatter as bn,
-  CategoryLink as bo,
-  setInLocalStorage as bp,
-  Underlay as bq,
-  Footer as br,
-  BillingCycleRadio as bs,
-  findBestPrice as bt,
-  FormattedCurrency as bu,
-  removeFromLocalStorage as bv,
-  LocaleSwitcher as bw,
-  ProductFeatureList as bx,
-  AvatarPlaceholderIcon as by,
-  UploadedFile as bz,
-  DialogBody as c,
-  TabletIcon as c0,
-  elementToTree as c1,
-  EnvatoIcon as c2,
-  FacebookIcon as c3,
-  TwitterIcon as c4,
-  useDialogContext as d,
-  useTrans as e,
-  useSearchArticles as f,
-  useNavigate as g,
-  ComboBoxForwardRef as h,
-  Item$1 as i,
-  getArticleLink as j,
-  ArticlePath as k,
-  getCategoryLink as l,
-  message as m,
-  apiClient as n,
-  CheckIcon as o,
-  useAuth as p,
-  opacityAnimation as q,
-  getEditArticleLink as r,
+  openUploadWindow as a$,
+  Dialog as a0,
+  DialogHeader as a1,
+  DialogBody as a2,
+  ComboBoxForwardRef as a3,
+  DialogFooter as a4,
+  ConfirmationDialog as a5,
+  useAutoFocus as a6,
+  useTickets as a7,
+  SearchTriggerButton as a8,
+  SettingsIcon as a9,
+  TimezoneSelect as aA,
+  useUser as aB,
+  prefetchValueLists as aC,
+  MoreHorizIcon as aD,
+  CustomMenu as aE,
+  LoginIcon as aF,
+  RadioGroup as aG,
+  Radio as aH,
+  FormImageSelector as aI,
+  KeyboardArrowRightIcon as aJ,
+  KeyboardArrowLeftIcon as aK,
+  MixedText as aL,
+  StaticPageTitle as aM,
+  useAppearanceEditorMode as aN,
+  ProgressCircle as aO,
+  List as aP,
+  ListItem as aQ,
+  clamp as aR,
+  createSvgIconFromTree as aS,
+  DoneAllIcon as aT,
+  Section as aU,
+  useBootstrapData as aV,
+  SiteConfigContext as aW,
+  useIsMobileMediaQuery as aX,
+  SelectForwardRef as aY,
+  ProgressBar as aZ,
+  ExternalLink as a_,
+  TextField as aa,
+  SearchIcon as ab,
+  DataTableEmptyStateMessage as ac,
+  FormattedDate as ad,
+  getArticleLink as ae,
+  useLocalStorage as af,
+  FileUploadProvider as ag,
+  openDialog as ah,
+  ErrorIcon as ai,
+  closeDialog as aj,
+  updateTicketQuery as ak,
+  useSyncEnvatoPurchases as al,
+  PersonIcon as am,
+  useTicket as an,
+  onFormQueryError as ao,
+  Form as ap,
+  ButtonBase as aq,
+  CheckCircleIcon as ar,
+  useTicketHcCategories as as,
+  getFromLocalStorage as at,
+  ArrowDropDownIcon as au,
+  Helmet as av,
+  getInputFieldClassNames as aw,
+  FormTextField as ax,
+  FormSelect as ay,
+  useValueLists as az,
+  useNavigate as b,
+  ComputerIcon as b$,
+  useSocialLogin as b0,
+  removeEmptyValuesFromObject as b1,
+  FormRadioGroup as b2,
+  FormRadio as b3,
+  DateFormatPresets as b4,
+  prettyBytes as b5,
+  useField as b6,
+  Field as b7,
+  useResendVerificationEmail as b8,
+  useUploadAvatar as b9,
+  useNumberFormatter as bA,
+  CategoryLink as bB,
+  setInLocalStorage as bC,
+  Underlay as bD,
+  Footer as bE,
+  BillingCycleRadio as bF,
+  findBestPrice as bG,
+  FormattedCurrency as bH,
+  removeFromLocalStorage as bI,
+  LocaleSwitcher as bJ,
+  ProductFeatureList as bK,
+  CustomerTicketListPage as bL,
+  useCustomerTicketRequestType as bM,
+  hasNextPage as bN,
+  AvatarPlaceholderIcon as bO,
+  UploadedFile as bP,
+  useCallbackRef as bQ,
+  isAbsoluteUrl as bR,
+  ChevronRightIcon as bS,
+  useActiveUpload as bT,
+  UploadInputType as bU,
+  Disk as bV,
+  AccountCircleIcon as bW,
+  AddAPhotoIcon as bX,
+  ApiIcon as bY,
+  ArrowDownwardIcon as bZ,
+  CheckBoxOutlineBlankIcon as b_,
+  useRemoveAvatar as ba,
+  slugifyString as bb,
+  useProducts as bc,
+  FormattedPrice as bd,
+  useMediaQuery as be,
+  rootEl as bf,
+  createEventHandler as bg,
+  WarningIcon as bh,
+  Checkbox as bi,
+  useFileUploadStore as bj,
+  shallowEqual as bk,
+  useSelectedLocale as bl,
+  useDateFormatter as bm,
+  useThemeSelector as bn,
+  lazyLoader as bo,
+  useSpinDelay as bp,
+  PageErrorMessage as bq,
+  TableContext as br,
+  useCustomPage as bs,
+  useCollator as bt,
+  loadFonts as bu,
+  useUserTimezone as bv,
+  useListbox as bw,
+  Listbox as bx,
+  Popover as by,
+  useListboxKeyboardNavigation as bz,
+  BreadcrumbItem as c,
+  DangerousIcon as c0,
+  DarkModeIcon as c1,
+  DevicesIcon as c2,
+  EastIcon as c3,
+  ErrorOutlineIcon as c4,
+  ExitToAppIcon as c5,
+  FileDownloadDoneIcon as c6,
+  ForumIcon as c7,
+  GroupAddIcon as c8,
+  LanguageIcon as c9,
+  LightModeIcon as ca,
+  LightbulbIcon as cb,
+  LockIcon as cc,
+  MenuIcon as cd,
+  NotificationsIcon as ce,
+  PaymentsIcon as cf,
+  PeopleIcon as cg,
+  PhonelinkLockIcon as ch,
+  SmartphoneIcon as ci,
+  TabletIcon as cj,
+  elementToTree as ck,
+  EnvatoIcon as cl,
+  FacebookIcon as cm,
+  TwitterIcon as cn,
+  apiClient as d,
+  Button as e,
+  CheckIcon as f,
+  getCategoryLink as g,
+  useAuth as h,
+  getEditArticleLink as i,
+  LinkStyle as j,
+  PageStatus as k,
+  highlightCode as l,
+  getBootstrapData as m,
+  ArticleIcon as n,
+  opacityAnimation as o,
+  ArticlePath as p,
+  useSearchTermLogger as q,
+  useSearchArticles as r,
   showHttpErrorToast as s,
-  LinkStyle as t,
+  IllustratedMessage as t,
   useIsDarkMode as u,
-  PageStatus as v,
-  Skeleton as w,
-  highlightCode as x,
-  getBootstrapData as y,
-  ArticleIcon as z
+  SvgImage as v,
+  searchImage as w,
+  LandingPage as x,
+  AuthRoute as y,
+  NotFoundPage as z
 };
 //# sourceMappingURL=server-entry.mjs.map

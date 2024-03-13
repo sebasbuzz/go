@@ -60,6 +60,9 @@ export function LandingPageSection() {
         <Item value="multiProduct">
           <Trans message="Multiproduct" />
         </Item>
+        <Item value="homeTickets">
+          <Trans message="HomeTickets" />
+        </Item>
       </FormSelect>
       {watch('settings.landing.content.variant') === 'articleGrid' && (
         <ArticleGridLayoutFields />

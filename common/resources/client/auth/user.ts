@@ -18,6 +18,7 @@ export interface User {
   permissions?: Permission[];
   email: string;
   password: string;
+  team_id?: number | undefined;
   language: string;
   timezone: string;
   country: string;

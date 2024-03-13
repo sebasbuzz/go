@@ -7,6 +7,7 @@ import {PageStatus} from '@common/http/page-status';
 import {ArticleGrid} from '@app/help-center/homepage/article-grid';
 import {ColorfulHeader} from '@app/help-center/homepage/colorful-header';
 import {SimpleHeader} from '@app/help-center/homepage/simple-header';
+import HomeTickets from './home-tickets';
 
 export function LandingPage() {
   const query = useLandingPage();
@@ -28,6 +29,7 @@ export function LandingPage() {
           loaderIsScreen={false}
         />
       )}
+      {landing?.content?.variant === 'homeTickets' && <HomeTickets />}
     </Layout>
   );
 }

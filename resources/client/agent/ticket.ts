@@ -8,6 +8,7 @@ export const TICKET_MODEL_TYPE = 'ticket';
 
 export interface TicketTag extends Tag {
   categories: Category[];
+  ticket_request_type?: any;
   support_expired?: boolean;
 }
 

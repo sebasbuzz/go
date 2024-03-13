@@ -62,7 +62,7 @@ export function CustomerTicketListPage() {
   );
 }
 
-function TicketTable() {
+export function TicketTable() {
   const [searchParams, setSearchParams] = useSearchParams();
   const {trans} = useTrans();
   const inputRef = useRef<HTMLInputElement>(null);
