@@ -9,6 +9,8 @@ import {Item} from '@common/ui/forms/listbox/item';
 import {message} from '@common/i18n/message';
 import {useTrans} from '@common/i18n/use-trans';
 import {CreateTicketCategoryPayload} from '@app/admin/ticket-categories/requests/use-create-ticket-category';
+import {useCustomerTicketRequestTypes} from '@app/help-center/tickets/customer-new-ticket-page/use-customer-ticket-request-types';
+/* import {TicketRequestType} from '@app/agent/ticket-request-type'; */
 
 interface Props {
   onSubmit: (values: CreateTicketCategoryPayload) => void;
@@ -16,6 +18,9 @@ interface Props {
   form: UseFormReturn<CreateTicketCategoryPayload>;
 }
 export function CrupdateTicketCategoryForm({form, onSubmit, formId}: Props) {
+  const query = useCustomerTicketRequestTypes();
+  const request_types = query?.data?.pagination.data;
+
   return (
     <Form id={formId} form={form} onSubmit={onSubmit}>
       <FormTextField
@@ -32,6 +37,18 @@ export function CrupdateTicketCategoryForm({form, onSubmit, formId}: Props) {
         description={<Trans message="Description for new ticket page." />}
         className="mb-20"
       />
+      <FormChipField
+        className="mb-30"
+        name="ticket_request_type"
+        label={<Trans message="Types" />}
+        suggestions={request_types}
+      >
+        {chip => (
+          <Item key={chip.id} value={chip.name}>
+            {chip.display_name}
+          </Item>
+        )}
+      </FormChipField>
       <FormTextField
         name="display_name"
         label={<Trans message="Display name" />}

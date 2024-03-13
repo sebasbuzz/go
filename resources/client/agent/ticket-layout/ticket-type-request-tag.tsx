@@ -1,28 +1,4 @@
-import {useQuery} from "@tanstack/react-query";
-import {apiClient} from "@common/http/query-client";
-import { BackendResponse } from "@common/http/backend-response/backend-response";
-
-interface TicketRequestType extends BackendResponse {
-  ticket_request_type: {
-    name: string;
-    display_name: string;
-  }
-
-}
-
-function useCustomerTicketRequestType(id:number) {
-  return useQuery({
-    queryKey: ['new-ticket-request-type'],
-    queryFn: () => fetchRequestTypes(id),
-  });
-}
-
-function fetchRequestTypes(id:number) {
-  return apiClient
-    .get<TicketRequestType>(`ticket-request-type/${id}`)
-    .then(response => response.data)
-}
-
+import { useCustomerTicketRequestType } from "../agent-ticket-page/requests/use-ticket";
 
 interface Props {
   ticketRequestType: number;
@@ -33,8 +9,11 @@ const badget = "relative flex flex-shrink-0 items-center justify-center gap-10 o
 export function TicketTypeRequestTag ( {ticketRequestType} : Props) {
   const query = useCustomerTicketRequestType(ticketRequestType);
 
-  return (
-    <div className={badget}>{query && query.data && query.data.ticket_request_type.display_name}</div>
+  return (<>
+      {query && query.data && (
+        <div className={badget}>{query.data.ticket_request_type?.display_name}</div>
+      )}
+    </>
   )
 }
 

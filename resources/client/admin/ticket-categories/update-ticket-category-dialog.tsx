@@ -23,6 +23,7 @@ export function UpdateTicketCategoryDialog({tag}: Props) {
       name: tag.name,
       display_name: tag.display_name,
       description_ticket_page: tag.description_ticket_page,
+      ticket_request_type: tag.ticket_request_type,
       categories: tag.categories,
     },
   });

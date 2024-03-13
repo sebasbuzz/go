@@ -63,7 +63,7 @@ declare module '@common/core/settings/settings' {
         backgroundSize?: string;
       };
       content?: {
-        variant?: 'articleGrid' | 'multiProduct';
+        variant?: 'articleGrid' | 'multiProduct' | 'homeTickets';
       };
     };
     hc?: {

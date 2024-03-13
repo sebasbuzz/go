@@ -5,6 +5,7 @@ import {FormattedRelativeTime} from '@common/i18n/formatted-relative-time';
 import React from 'react';
 import {ChipList} from '@common/ui/forms/input-field/chip-field/chip-list';
 import {Chip} from '@common/ui/forms/input-field/chip-field/chip';
+import TicketTypeRequestTag from '@app/agent/ticket-layout/ticket-type-request-tag';
 
 export const TicketTableColumns: ColumnConfig<Ticket>[] = [
   {
@@ -89,6 +90,7 @@ function TicketSummary({ticket}: TicketSummaryProps) {
             <Chip key={tag.id}>{tag.display_name || tag.name}</Chip>
           ))}
         </ChipList>
+        <TicketTypeRequestTag ticketRequestType={ticket.ticket_request_type}/>
         <div>{ticket.subject}</div>
       </div>
       {body && (

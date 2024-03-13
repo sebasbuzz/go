@@ -30,6 +30,7 @@ use App\Http\Controllers\RepliesController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\TeamsController;
 use App\Http\Controllers\TicketAssigneeController;
 use App\Http\Controllers\TicketCategoriesController;
 use App\Http\Controllers\TicketRequestTypeController;
@@ -72,6 +73,13 @@ Route::group(['prefix' => 'v1'], function() {
         Route::get('users/{user}/purchases', [UserPurchasesController::class, 'index']);
         Route::put('users/{id}/details', [UserDetailsController::class, 'update']);
         Route::post('merge-users', MergeUsersController::class);
+
+        //TEAMS
+        Route::get('teams', [TeamsController::class, 'index']);
+        Route::get('teams/{id}', [TeamsController::class, 'show']);
+        Route::post('teams', [TeamsController::class, 'store']);
+        Route::delete('teams/{ids}', [TeamsController::class, 'destroy']);
+        Route::put('teams/{id}', [TeamsController::class, 'update']);
 
         //SEARCH
         Route::get('search/all', [SearchController::class, 'all']);

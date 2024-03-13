@@ -14,11 +14,15 @@ interface Response extends BackendResponse {
   tag: Tag;
 }
 
+/* interface RequestTypes  {
+  id: number
+} */
 export interface CreateTicketCategoryPayload {
   name: string;
   display_name: string;
   description_ticket_page?: string;
   categories: ChipValue[];
+  ticket_request_type?: ChipValue[];
 }
 
 export function useCreateTicketCategory(
@@ -43,6 +47,7 @@ function createCategory(
   const payload = {
     ...formPayload,
     categories: formPayload.categories?.map(c => c.id) ?? [],
+    ticket_request_type: formPayload.ticket_request_type?.map(c => c.id) ?? [],
   };
   return apiClient.post('ticket-categories', payload).then(r => r.data);
 }

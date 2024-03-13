@@ -24,7 +24,7 @@ import {FileUploadProvider} from '@common/uploads/uploader/file-upload-provider'
 import {ReplyEditor} from '@app/reply-editor/reply-editor';
 import {Button} from '@common/ui/buttons/button';
 import {TicketTag} from '@app/agent/ticket';
-import {TicketRequestType} from '@app/agent/ticket-request-type';
+import {TicketRequestType, TicketRequestTypeTag} from '@app/agent/ticket-request-type';
 import {useCustomerNewTicketConfig} from '@app/help-center/tickets/customer-new-ticket-page/use-customer-new-ticket-config';
 import {SuggestedArticlesDrawer} from '@app/help-center/tickets/customer-new-ticket-page/suggested-articles-drawer';
 import {
@@ -37,6 +37,7 @@ export function CustomerNewTicketPage() {
   const navigate = useNavigate();
   const config = useCustomerNewTicketConfig();
   const query = useCustomerTicketCategories();
+  /* console.log('query', query); */
   const queryRequestType = useCustomerTicketRequestTypes();
   const {envato} = useSettings();
   return (
@@ -67,7 +68,7 @@ export function CustomerNewTicketPage() {
             {query.data && queryRequestType.data ? (
               <TicketForm
                 ticketCategories={query.data.pagination.data}
-                ticketRequestTypes={queryRequestType.data.pagination.data} 
+                ticketRequestTypes={queryRequestType.data.pagination.data}
               />
             ) : null}
           </main>
@@ -83,6 +84,7 @@ interface TicketFormProps {
   ticketRequestTypes: TicketRequestType[];
 }
 function TicketForm({ticketCategories, ticketRequestTypes}: TicketFormProps) {
+  console.log('ticketCategories', ticketCategories);
   const config = useCustomerNewTicketConfig();
   const navigate = useNavigate();
   const form = useForm<CreateTicketPayload>({
@@ -106,8 +108,11 @@ function TicketForm({ticketCategories, ticketRequestTypes}: TicketFormProps) {
   const selectedCategory = ticketCategories.find(
     c => c.id == selectedCategoryId,
   );
+  const types : TicketRequestTypeTag[] = selectedCategory?.ticket_request_type;
+  
 
   const handleSubmit = () => {
+    console.log('form.getValues()', form.getValues());
     createTicket.mutate(
       {
         ...form.getValues(),
@@ -164,18 +169,21 @@ function TicketForm({ticketCategories, ticketRequestTypes}: TicketFormProps) {
           </Item>
         ))}
       </FormSelect>
-      <FormSelect
-        name="ticket_request_type"
-        label={<Trans message="Request Type" />}
-        selectionMode="single"
-        className="mb-24"
-      >
-        {ticketRequestTypes.map(request_type => (
-          <Item key={request_type.id} value={request_type.id}>
-            {request_type.display_name || request_type.name}
-          </Item>
-        ))}
-      </FormSelect>
+      {
+        types?.length > 0 && 
+        <FormSelect
+          name="ticket_request_type"
+          label={<Trans message="Request Type" />}
+          selectionMode="single"
+          className="mb-24"
+        >
+          {types.map((request_type) => (
+            <Item key={request_type.id} value={request_type.id}>
+              {request_type.display_name || request_type.name}
+            </Item>
+          ))}
+        </FormSelect>
+      }
       <FormTextField
         name="subject"
         label={<Trans message={config!.subjectLabel} />}

@@ -102,6 +102,7 @@ export const DefaultAppearanceConfig: IAppearanceConfig = {
           '/admin',
           '/admin/appearance',
           '/admin/ticket-request-type',
+          '/admin/teams',
           '/admin/settings',
           '/admin/plans',
           '/admin/subscriptions',
