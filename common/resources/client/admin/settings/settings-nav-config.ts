@@ -11,6 +11,7 @@ export interface SettingsNavItem {
 
 const filteredSettingsNavConfig: (SettingsNavItem | false)[] = [
   {label: message('General'), to: 'general'},
+  {label: message('Hubstaff'), to: 'hubstaff'},
   ...AppSettingsNavConfig,
   getBootstrapData().settings.billing.integrated && {
     label: message('Subscriptions'),

@@ -14008,7 +14008,7 @@ function Layout({ children }) {
 }
 const HelpCenterRoutes = React.lazy(() => import("./assets/hc-routes-a41bf25b.mjs"));
 const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-c5ef5570.mjs"));
-const AdminRoutes = React.lazy(() => import("./assets/admin-routes-071a95b8.mjs").then((n) => n.B));
+const AdminRoutes = React.lazy(() => import("./assets/admin-routes-2277916f.mjs").then((n) => n.B));
 const SwaggerApiDocs = React.lazy(
   () => import("./assets/swagger-api-docs-page-140d0a3b.mjs")
 );

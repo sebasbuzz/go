@@ -35,6 +35,7 @@ use App\Http\Controllers\TicketAssigneeController;
 use App\Http\Controllers\TicketCategoriesController;
 use App\Http\Controllers\TicketRequestTypeController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\HubstaffTokenController;
 use App\Http\Controllers\TicketRepliesController;
 use App\Http\Controllers\TicketsMergeController;
 use App\Http\Controllers\TicketStatusController;
@@ -149,6 +150,10 @@ Route::group(['prefix' => 'v1'], function() {
         Route::post('triggers', [TriggerController::class, 'store']);
         Route::put('triggers/{trigger}', [TriggerController::class, 'update']);
         Route::delete('triggers/{ids}', [TriggerController::class, 'destroy']);
+        
+        //HUBSTAFF
+        Route::post('hubstaff-token', [HubstaffTokenController::class, 'store']);
+        Route::get('hubstaff-token', [HubstaffTokenController::class, 'index']);
 
         //ENVATO
         Route::get('envato/validate-purchase-code', [EnvatoController::class, 'validateCode']);

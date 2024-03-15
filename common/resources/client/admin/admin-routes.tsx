@@ -12,6 +12,7 @@ import {CustomCodeSection} from './appearance/sections/code/custom-code-section'
 import {CustomPageDatablePage} from './custom-pages/custom-page-datable-page';
 import {SettingsLayout} from './settings/settings-layout';
 import {GeneralSettings} from './settings/pages/general-settings';
+import {HubstaffSettings} from './settings/pages/hubstaff-settings';
 import {ThemeEditor} from './appearance/sections/themes/theme-editor';
 import {AppSettingsRoutes} from '@app/admin/settings/app-settings-routes';
 import {SubscriptionSettings} from './settings/pages/subscription-settings';
@@ -51,6 +52,7 @@ import {CreateCustomPage} from '@common/admin/custom-pages/create-custom-page';
 import {ThemeFontPanel} from '@common/admin/appearance/sections/themes/theme-font-panel';
 import {ThemeRadiusPanel} from '@common/admin/appearance/sections/themes/theme-radius-panel';
 import { TeamsIndexPage } from './teams/teams-index-page';
+
 
 const ReportsPage = React.lazy(() => import('./analytics/admin-report-page'));
 
@@ -282,6 +284,7 @@ const AdminRouteConfig: RouteObject[] = [
         children: [
           {index: true, element: <Navigate to="general" replace />},
           {path: 'general', element: <GeneralSettings />},
+          {path: 'hubstaff', element: <HubstaffSettings />},
           {path: 'subscriptions', element: <SubscriptionSettings />},
           {path: 'localization', element: <LocalizationSettings />},
           {path: 'authentication', element: <AuthenticationSettings />},
