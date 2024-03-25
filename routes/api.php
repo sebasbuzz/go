@@ -154,6 +154,7 @@ Route::group(['prefix' => 'v1'], function() {
         //HUBSTAFF
         Route::post('hubstaff-token', [HubstaffTokenController::class, 'store']);
         Route::get('hubstaff-token', [HubstaffTokenController::class, 'index']);
+        Route::get('hubstaff-access-token', [HubstaffTokenController::class, 'indexAcessToken']);
 
         //ENVATO
         Route::get('envato/validate-purchase-code', [EnvatoController::class, 'validateCode']);

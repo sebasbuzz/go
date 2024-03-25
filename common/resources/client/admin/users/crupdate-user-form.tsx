@@ -15,15 +15,7 @@ import {FormChipField} from '../../ui/forms/input-field/chip-field/form-chip-fie
 import {Item} from '../../ui/forms/listbox/item';
 import {CrupdateResourceLayout} from '../crupdate-resource-layout';
 import {useSettings} from '../../core/settings/use-settings';
-import { useTeams } from './requests/use-teams';
-
-const MOCKDATA = [
-  {
-    id: 123,
-    name: "design",
-    display_name: "Design"
-  }
-]
+import {useTeams} from './requests/use-teams';
 
 interface Props<T extends FieldValues> {
   onSubmit: SubmitHandler<T>;

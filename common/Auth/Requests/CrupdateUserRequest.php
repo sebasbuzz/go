@@ -26,6 +26,7 @@ class CrupdateUserRequest extends BaseFormRequest
             'language' => 'nullable|string|max:255',
             'timezone' => 'nullable|string|max:255',
             'team_id' => 'nullable|int',
+            'hubstaff_user_id' => 'nullable|int',
         ];
 
         if ($this->method() === 'POST') {
