@@ -17,13 +17,6 @@ class HubstaffTokenController extends BaseController
         $this->middleware('auth');
     }
 
-    /* public function index()
-    {
-        $hubstaffToken = HubstaffToken::first();
-
-        return $this->success(['hubstaff_token' => $hubstaffToken]);
-    } */
-
     public function index()
     {
         $expiredToken = HubstaffToken::pluck('expired_token')->first();
@@ -33,6 +26,17 @@ class HubstaffTokenController extends BaseController
         }
 
         return $this->success(['expired_token' => $expiredToken]);
+    }
+
+    public function indexAcessToken()
+    {
+        $accessToken = HubstaffToken::pluck('access_token')->first();
+
+        if (!$accessToken) {
+            return $this->error('No data found.', 404);
+        }
+
+        return $this->success(['access_token' => $accessToken]);
     }
 
     public function store()
@@ -61,48 +65,4 @@ class HubstaffTokenController extends BaseController
             return $this->success(['hubstaff_token' => $hubstaffToken]);
         }
     }
-
-    /* public function destroy(string $ids)
-    {
-        $requesttypeIds = explode(',', $ids);
-        //$this->authorize('destroy', [TicketRequestType::class, $requesttypeIds]);
-
-        TicketRequestType::whereIn('id', $requesttypeIds)->delete();
-
-        return $this->success();
-    } */
-
-    /* public function update(int $requesttypeId)
-    {
-        //$this->authorize('update', Tag::class);
-
-        $data = $this->validate(request(), [
-            'name' => "string|min:2|unique:ticket_request_type,name,$requesttypeId",
-            'display_name' => 'string|min:2',
-        ]);
-
-        $requesttype = TicketRequestType::findOrFail($requesttypeId);
-
-        $requesttype->fill([
-            'name' => $data['name'],
-            'display_name' => $data['display_name'],
-        ])->save();
-
-        return $this->success(['ticket_request_type' => $requesttype]);
-    } */
-
-    /* public function show(TicketRequestType $id)
-    {
-        //$this->authorize('show', $id);
-
-        if ($id) {
-            $response = [
-                'name' => $id->name,
-                'display_name' => $id->display_name,
-                'id' => $id->id,
-            ];
-
-            return $this->success(['ticket_request_type' => $response]);
-        }
-    } */
 }

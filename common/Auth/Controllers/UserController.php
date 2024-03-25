@@ -25,6 +25,15 @@ class UserController extends BaseController
         return $this->success(['pagination' => $pagination]);
     }
 
+    public function getAllUsers()
+    {
+
+        $paginateUsers = new PaginateUsers();
+        $pagination = $paginateUsers->execute(['paginate' => false]);
+
+        return $this->success(['pagination' => $pagination]);
+    }
+
     public function show(User $user)
     {
         $relations = array_filter(explode(',', request('with', '')));

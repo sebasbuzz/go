@@ -34,10 +34,10 @@ export default defineConfig({
   /* base: '/', */
   resolve: {
     preserveSymlinks: true,
-    /* alias: {
+    alias: {
       '@common': '/common/resources/client',
       '@app': '/resources/client',
-    }, */
+    },
   },
   build: {
     sourcemap: true,

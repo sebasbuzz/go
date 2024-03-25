@@ -33,6 +33,7 @@ export interface User {
   unread_notifications_count?: number;
   card_last_four?: number;
   card_brand?: string;
+  hubstaff_user_id?: number;
   card_expires?: string;
   model_type: typeof USER_MODEL;
   banned_at?: string;

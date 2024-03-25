@@ -6,6 +6,7 @@ use App\Models\User;
 use Common\Database\Datasource\Datasource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 
 class PaginateUsers
@@ -55,6 +56,16 @@ class PaginateUsers
                             ->orWhere('name', 'admin'),
                     ),
                 );
+        }
+
+        if (Arr::get($params, 'paginate', true) === false) {
+            return new LengthAwarePaginator(
+                $query->get(),
+                $query->count(),
+                -1, // Tamaño de página, -1 indica que no se está paginando
+                1, // Página actual, que será 1
+                ['path' => request()->url()] // Opcional, para mantener las URLs de paginación
+            );
         }
 
         return (new Datasource($query, $params))->paginate();

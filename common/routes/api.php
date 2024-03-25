@@ -115,6 +115,7 @@ Route::group(['prefix' => 'v1'], function () {
 
         //USERS
         Route::get('users/{user}', [UserController::class, 'show'])->withoutMiddleware('verified');
+        Route::get('users-all', [UserController::class, 'getAllUsers']);
         Route::apiResource('users', UserController::class)->except(['destroy', 'show']);
         Route::delete('users/{ids}', [UserController::class, 'destroy']);
         Route::post('access-tokens', [AccessTokenController::class, 'store']);

@@ -14007,8 +14007,8 @@ function Layout({ children }) {
   ] });
 }
 const HelpCenterRoutes = React.lazy(() => import("./assets/hc-routes-a41bf25b.mjs"));
-const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-c5ef5570.mjs"));
-const AdminRoutes = React.lazy(() => import("./assets/admin-routes-2277916f.mjs").then((n) => n.B));
+const MailboxRoutes = React.lazy(() => import("./assets/agent-routes-bcd89b2f.mjs"));
+const AdminRoutes = React.lazy(() => import("./assets/admin-routes-c7808b3c.mjs").then((n) => n.B));
 const SwaggerApiDocs = React.lazy(
   () => import("./assets/swagger-api-docs-page-140d0a3b.mjs")
 );
