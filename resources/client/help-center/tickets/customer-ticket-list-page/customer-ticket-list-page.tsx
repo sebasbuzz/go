@@ -23,6 +23,7 @@ import {Button} from '@common/ui/buttons/button';
 import {CustomerTicketTableColumns} from '@app/help-center/tickets/customer-ticket-list-page/customer-ticket-table-columns';
 import {BreadcrumbItem} from '@common/ui/breadcrumbs/breadcrumb-item';
 import {Breadcrumb} from '@common/ui/breadcrumbs/breadcrumb';
+import { createHubstaffTask } from '../create-task-hubstaff/use-task-hubstaff';
 
 const defaultPage = '1';
 const defaultPerPage = '20';
@@ -55,6 +56,7 @@ export function CustomerTicketListPage() {
           >
             <Trans message="New request" />
           </Button>
+          <button onClick={() => createHubstaffTask()}>test create task</button>
         </div>
         <TicketTable />
       </main>
